@@ -1,0 +1,27 @@
+type Invoice {
+    id: ID! @rename(attribute: "public_id")
+    title: String!
+    type: String!
+    amount: Float!
+    currency: String!
+    dueDate: DateTime! @rename(attribute: "due_date")
+    status: InvoiceStatus!
+    student: Student! @belongsTo
+    transactions: [Transaction!]! @hasMany
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type Transaction {
+    id: ID! @rename(attribute: "public_id")
+    amount: Float!
+    currency: String!
+    method: PaymentMethod!
+    status: PaymentStatus!
+    referenceCode: String! @rename(attribute: "reference_code")
+    transactionDate: DateTime! @rename(attribute: "transaction_date")
+    student: Student! @belongsTo
+    invoice: Invoice @belongsTo
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

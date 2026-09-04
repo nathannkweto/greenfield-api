@@ -1,0 +1,60 @@
+"Represents the admission and current standing of a student"
+enum StudentStatus {
+    DRAFT      @enum(value: "Draft")
+    REGISTERED @enum(value: "Registered")
+    ADMITTED   @enum(value: "Admitted")
+    PENDING    @enum(value: "Pending")
+    REJECTED   @enum(value: "Rejected")
+    GRADUATED  @enum(value: "Graduated")
+    SUSPENDED  @enum(value: "Suspended")
+}
+
+"Represents the state of a financial transaction"
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+"Represents the state of a student's enrollment in a specific course offering"
+enum EnrollmentStatus {
+    IN_PROGRESS @enum(value: "In Progress")
+    COMPLETED   @enum(value: "Completed")
+    DROPPED     @enum(value: "Dropped")
+}
+
+"Represents the billing status of a student's invoice"
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+"Represents the method used for a financial transaction"
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_MONEY
+  CARD
+}
+
+enum AnnouncementType {
+    GENERAL @enum(value: "General")
+    TIMETABLE @enum(value: "Timetable")
+    ASSIGNMENT @enum(value: "Assignment")
+    ALERT @enum(value: "Alert")
+}
+
+enum TargetLevel {
+    COLLEGE @enum(value: "College")
+    SCHOOL @enum(value: "School")
+    PROGRAM @enum(value: "Program")
+}
+
+enum FileType {
+    PDF @enum(value: "pdf")
+    IMAGE @enum(value: "image")
+    DOC @enum(value: "doc")
+}

@@ -1,0 +1,84 @@
+# ----------------------------------------------------------------------
+# Enums
+# ----------------------------------------------------------------------
+
+enum AssessmentType {
+    END_OF_TERM @enum(value: "End of Term")
+    FINAL_EXAM @enum(value: "Final Exam")
+}
+
+# ----------------------------------------------------------------------
+# Types
+# ----------------------------------------------------------------------
+
+type Course {
+    id: ID! @rename(attribute: "public_id")
+    code: String!
+    title: String!
+    description: String
+    credits: Int!
+
+    school: School! @belongsTo
+    curricula: [Curriculum!]! @hasMany
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type Curriculum {
+    id: ID! @rename(attribute: "public_id")
+    year: Int!
+
+    program: Program! @belongsTo
+    course: Course! @belongsTo
+    lecturer: Lecturer @belongsTo
+
+    enrollments: [Enrollment!]! @hasMany
+    assessments: [Assessment!]! @hasMany
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type Enrollment {
+    id: ID! @rename(attribute: "public_id")
+    status: EnrollmentStatus!
+    completionDate: Date @rename(attribute: "completion_date")
+    dropDate: Date @rename(attribute: "drop_date")
+    grade: String
+    points: Float
+
+    student: Student! @belongsTo
+    curriculum: Curriculum! @belongsTo
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type Assessment {
+    id: ID! @rename(attribute: "public_id")
+    title: String!
+    description: String
+    type: AssessmentType!
+    term: Int
+    weightPercentage: Float! @rename(attribute: "weight_percentage")
+    maxScore: Float! @rename(attribute: "max_score")
+    dueDate: DateTime @rename(attribute: "due_date")
+
+    curriculum: Curriculum! @belongsTo
+    assessmentResults: [AssessmentResult!]! @hasMany(relation: "assessment_results")
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type AssessmentResult {
+    id: ID! @rename(attribute: "public_id")
+    score: Float
+
+    assessment: Assessment! @belongsTo
+    student: Student! @belongsTo
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

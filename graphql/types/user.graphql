@@ -1,0 +1,11 @@
+type User {
+    id: ID! @rename(attribute: "public_id")
+    email: String!
+    admins: [Admin!]! @hasMany
+    lecturers: [Lecturer!]! @hasMany
+    students: [Student!]! @hasMany
+    schools: [School!]! @hasMany(relation: "schools")
+    applicants: [Applicant!]! @hasMany(relation: "applicants")
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

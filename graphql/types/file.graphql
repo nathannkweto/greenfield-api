@@ -1,0 +1,9 @@
+type File {
+    id: ID! @rename(attribute: "public_id")
+    fileName: String! @rename(attribute: "file_name")
+    fileType: FileType! @rename(attribute: "file_type")
+    fileSize: String! @rename(attribute: "file_size")
+    filePath: String! @rename(attribute: "file_path")
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

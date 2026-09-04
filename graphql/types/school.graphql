@@ -1,0 +1,11 @@
+type School {
+    id: ID! @rename(attribute: "public_id")
+    name: String!
+    description: String
+    dean: User @belongsTo(relation: "user")
+    programs: [Program!]! @hasMany
+    courses: [Course!]! @hasMany
+    lecturers: [Lecturer!]! @hasMany
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

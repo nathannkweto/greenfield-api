@@ -1,0 +1,8 @@
+"A date string with format YYYY-MM-DD, e.g. 2026-08-13."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+"A datetime string with format YYYY-MM-DD HH:MM:SS, e.g. 2026-08-13 14:30:00."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Arbitrary JSON data"
+scalar JSON @scalar(class: "MLL\\GraphQLScalars\\JSON")

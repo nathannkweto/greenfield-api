@@ -1,0 +1,40 @@
+enum ProgramLevel {
+    Certificate
+    Diploma
+    Degree
+    Post_graduate_Diploma @enum(value: "Post-graduate Diploma")
+}
+
+enum DurationUnit {
+    weeks
+    months
+    years
+}
+
+type Program {
+    id: ID! @rename(attribute: "public_id")
+    code: String!
+    title: String!
+    level: ProgramLevel!
+    durationValue: Int! @rename(attribute: "duration_value")
+    durationUnit: DurationUnit! @rename(attribute: "duration_unit")
+    shortDescription: String @rename(attribute: "short_description")
+    longDescription: String @rename(attribute: "long_description")
+
+    school: School! @belongsTo
+    requirements: [Requirement!]! @hasMany
+    curricula: [Curriculum!]! @hasMany
+    students: [Student!]! @hasMany
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+type Requirement {
+    id: ID! @rename(attribute: "public_id")
+    description: String!
+    sortOrder: Int! @rename(attribute: "sort_order")
+    program: Program! @belongsTo
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

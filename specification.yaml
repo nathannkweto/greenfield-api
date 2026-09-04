@@ -1,0 +1,1533 @@
+openapi: 3.0.3
+info:
+  title: Greenfield College System API
+  description: Complete API Specification covering all write/mutation endpoints.
+  version: 1.0.0
+servers:
+  - url: https://api.greenfieldcollege.edu.zm/api/v1
+    description: Production API Server
+  - url: http://localhost:8000/api/v1
+    description: Local Development Environment
+
+security:
+  - CookieAuth: []
+    CsrfToken: []
+
+tags:
+  - name: Public
+    description: Unauthenticated setup endpoints.
+  - name: Auth
+    description: Authentication and session management.
+  - name: Files
+    description: Centralized file storage and polymorphic file pipeline.
+  - name: Applicants
+    description: Applicant profile management and registrations.
+  - name: Students
+    description: Student lifecycle operations (admissions, rejection, registration, course enrollment).
+  - name: Terms
+    description: Academic term lifecycle and activation.
+  - name: Schools
+    description: Management of faculties and academic schools.
+  - name: Deans
+    description: Executive school leadership administration.
+  - name: Programs
+    description: Management of academic degree programs, requirements, and curriculums.
+  - name: Courses
+    description: Catalog management, course materials, assessments, and grading.
+  - name: Lecturers
+    description: Faculty member profiles and teaching assignments.
+  - name: Admins
+    description: Administrative staff management.
+  - name: Finance
+    description: Student billing, fee schedules, and transaction processing.
+  - name: Announcements
+    description: Campus-wide and target-group broadcasting.
+  - name: Notifications
+    description: Push notification device token registration.
+  - name: Results
+    description: Grade compilation and exam result publishing.
+
+paths:
+  /sanctum/csrf-cookie:
+    get:
+      tags:
+        - Auth
+      summary: Initialize CSRF Protection
+      description: Sets the XSRF-TOKEN cookie required for state-changing POST/PUT/DELETE requests.
+      security: []
+      responses:
+        '204':
+          description: CSRF cookie successfully set.
+
+  /files/upload:
+    post:
+      tags:
+        - Files
+      summary: Upload File
+      description: Single pipeline endpoint to upload any binary asset prior to linking via domain schemas.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+      responses:
+        '201':
+          description: File uploaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponse'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /applicants/create:
+    post:
+      tags:
+        - Applicants
+      summary: Create Applicant Profile
+      description: Creates a new applicant profile linked to a user account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicantRequest'
+      responses:
+        '201':
+          description: Applicant created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /apply:
+    post:
+      tags:
+        - Students
+      summary: Submit Admission Application
+      description: Allows authenticated applicants to submit admission details referencing pre-uploaded document UUIDs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '201':
+          description: Application submitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: User Authentication
+      description: Authenticates user credentials and establishes an HttpOnly session cookie.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successfully authenticated.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: laravel_session=eyJpdiI6...; path=/; secure; httponly; samesite=lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Authenticated successfully."
+                  user:
+                    type: object
+                    properties:
+                      public_id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                        example: ["admin"]
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: User Logout
+      description: Invalidates the authenticated user session and clears session cookies.
+      responses:
+        '200':
+          description: Successfully logged out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /auth/password/change:
+    post:
+      tags:
+        - Auth
+      summary: Change Authenticated User Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Password changed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /students/{public_id}/admit:
+    post:
+      tags:
+        - Students
+      summary: Admit Applicant
+      description: Approves student admission status and generates student number.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      responses:
+        '200':
+          description: Student admitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /students/{public_id}/reject:
+    post:
+      tags:
+        - Students
+      summary: Reject Applicant
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  example: "Did not meet academic requirements."
+      responses:
+        '200':
+          description: Application rejected successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /students/{public_id}/register:
+    post:
+      tags:
+        - Students
+      summary: Register Student Profile
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      responses:
+        '200':
+          description: Student registered successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /students/{public_id}/enroll:
+    post:
+      tags:
+        - Students
+      summary: Enroll Student in Curriculum Courses
+      description: Assigns student to curriculum course mappings for an academic year.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentEnrollmentRequest'
+      responses:
+        '200':
+          description: Student enrolled into courses successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /students/{public_id}/documents:
+    post:
+      tags:
+        - Students
+      summary: Attach Uploaded Document to Student
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUploadRequest'
+      responses:
+        '201':
+          description: Document attached successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /schools/create:
+    post:
+      tags:
+        - Schools
+      summary: Create New School
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchoolRequest'
+      responses:
+        '201':
+          description: School created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /schools/{public_id}/edit:
+    post:
+      tags:
+        - Schools
+      summary: Edit School Details
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchoolRequest'
+      responses:
+        '200':
+          description: School updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /deans/create:
+    post:
+      tags:
+        - Deans
+      summary: Create Dean Profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeanRequest'
+      responses:
+        '201':
+          description: Dean profile created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /deans/{public_id}/edit:
+    post:
+      tags:
+        - Deans
+      summary: Edit Dean Profile
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeanRequest'
+      responses:
+        '200':
+          description: Dean profile updated successfully.
+
+  /programs/create:
+    post:
+      tags:
+        - Programs
+      summary: Create Academic Program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+      responses:
+        '201':
+          description: Program created successfully.
+
+  /programs/{public_id}/edit:
+    post:
+      tags:
+        - Programs
+      summary: Edit Academic Program
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+      responses:
+        '200':
+          description: Program updated successfully.
+
+  /programs/{public_id}/requirements:
+    post:
+      tags:
+        - Programs
+      summary: Attach Admission Requirements to Program
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementRequest'
+      responses:
+        '200':
+          description: Requirements updated successfully.
+
+  /programs/{public_id}/curriculum:
+    post:
+      tags:
+        - Programs
+      summary: Configure Program Curriculum Mapping
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurriculumRequest'
+      responses:
+        '200':
+          description: Curriculum configuration saved.
+
+  /courses/create:
+    post:
+      tags:
+        - Courses
+      summary: Create Course Catalog Item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '201':
+          description: Course created successfully.
+
+  /courses/{public_id}/edit:
+    post:
+      tags:
+        - Courses
+      summary: Edit Course Information
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '200':
+          description: Course updated successfully.
+
+  /curricula/{public_id}/assessments/create:
+    post:
+      tags:
+        - Curricula
+      summary: Create Curriculum Assessment
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentRequest'
+      responses:
+        '201':
+          description: Assessment created successfully.
+
+  /curricula/assessments/{public_id}/edit:
+    post:
+      tags:
+        - Curricula
+      summary: Edit Assessment
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentRequest'
+      responses:
+        '200':
+          description: Assessment updated successfully.
+
+  /curricula/assessments/{public_id}/grades:
+    post:
+      tags:
+        - Curricula
+      summary: Record Student Grades for Assessment
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeRequest'
+      responses:
+        '200':
+          description: Assessment scores recorded successfully.
+
+  /curricula/{public_id}/materials/create:
+    post:
+      tags:
+        - Curricula
+      summary: Create Curriculum Material
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+      responses:
+        '201':
+          description: Material uploaded and attached successfully.
+
+  /curricula/materials/{public_id}/edit:
+    post:
+      tags:
+        - Curricula
+      summary: Edit Curriculum Material
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+      responses:
+        '200':
+          description: Material updated successfully.
+
+  /lecturers/create:
+    post:
+      tags:
+        - Lecturers
+      summary: Create Lecturer Profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LecturerRequest'
+      responses:
+        '201':
+          description: Lecturer profile created.
+
+  /lecturers/{public_id}/edit:
+    post:
+      tags:
+        - Lecturers
+      summary: Edit Lecturer Profile
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LecturerRequest'
+      responses:
+        '200':
+          description: Lecturer profile updated.
+
+  /lecturers/{public_id}/assign:
+    post:
+      tags:
+        - Lecturers
+      summary: Assign Curriculum Courses to Lecturer
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - curriculum_public_ids
+              properties:
+                curriculum_public_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Curriculum courses assigned successfully.
+
+  /admins/create:
+    post:
+      tags:
+        - Admins
+      summary: Create Administrator Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRequest'
+      responses:
+        '201':
+          description: Administrator created.
+
+  /admins/{public_id}/edit:
+    post:
+      tags:
+        - Admins
+      summary: Edit Administrator Details
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRequest'
+      responses:
+        '200':
+          description: Administrator updated.
+
+  /announcements/create:
+    post:
+      tags:
+        - Announcements
+      summary: Create Broadcast Announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRequest'
+      responses:
+        '201':
+          description: Announcement published successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /announcements/{public_id}/edit:
+    post:
+      tags:
+        - Announcements
+      summary: Edit Announcement
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRequest'
+      responses:
+        '200':
+          description: Announcement updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /results/{public_id}/publish:
+    post:
+      tags:
+        - Results
+      summary: Publish Assessment Results
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notify_students:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Assessment results published successfully.
+
+components:
+  parameters:
+    PublicId:
+      name: public_id
+      in: path
+      required: true
+      description: Unique public UUID resource identifier.
+      schema:
+        type: string
+        format: uuid
+
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: Encrypted HttpOnly session cookie set upon successful login.
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: CSRF protection token passed in request header.
+
+  responses:
+    '401Unauthorized':
+      description: Unauthenticated access.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '403Forbidden':
+      description: Forbidden. Insufficient role permissions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '404NotFound':
+      description: Requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    '422ValidationError':
+      description: Validation payload error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+
+  schemas:
+    StandardResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Operation completed successfully."
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthorized action."
+        error:
+          type: string
+          example: "FORBIDDEN"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    FileUploadRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+        collection:
+          type: string
+          nullable: true
+          example: "nrc_document"
+
+    FileUploadResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "File uploaded successfully."
+        data:
+          type: object
+          properties:
+            public_id:
+              type: string
+              format: uuid
+              example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+            original_name:
+              type: string
+              example: "nrc_scan.pdf"
+            mime_type:
+              type: string
+              example: "application/pdf"
+            size:
+              type: integer
+              example: 1048576
+
+    ApplicantRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - phone
+      properties:
+        first_name:
+          type: string
+          example: "Jane"
+        middle_names:
+          type: string
+          nullable: true
+          example: "Mwansa"
+        last_name:
+          type: string
+          example: "Phiri"
+        email:
+          type: string
+          format: email
+          example: "jane.phiri@example.com"
+        phone:
+          type: string
+          example: "+260971234567"
+
+    ApplicantResponseData:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        user_public_id:
+          type: string
+          format: uuid
+          description: "Public UUID of the newly created user account."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        first_name:
+          type: string
+          example: "Jane"
+        middle_names:
+          type: string
+          nullable: true
+          example: "Mwansa"
+        last_name:
+          type: string
+          example: "Phiri"
+        email:
+          type: string
+          format: email
+          example: "jane.phiri@example.com"
+        phone:
+          type: string
+          example: "+260971234567"
+
+    ApplicantResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Applicant profile created successfully."
+        data:
+          $ref: '#/components/schemas/ApplicantResponseData'
+
+    PasswordChangeRequest:
+      type: object
+      required:
+        - current_password
+        - new_password
+        - new_password_confirmation
+      properties:
+        current_password:
+          type: string
+          format: password
+        new_password:
+          type: string
+          format: password
+        new_password_confirmation:
+          type: string
+          format: password
+
+    ApplicationRequest:
+      type: object
+      required:
+        - program_public_id
+        - first_name
+        - last_name
+        - email
+        - phone
+        - sex
+        - marital_status
+        - intake
+        - study_mode
+      properties:
+        program_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        first_name:
+          type: string
+          example: "Jane"
+        middle_names:
+          type: string
+          nullable: true
+          example: "Mwansa"
+        last_name:
+          type: string
+          example: "Phiri"
+        email:
+          type: string
+          format: email
+          example: "jane.phiri@example.com"
+        phone:
+          type: string
+          example: "+260971234567"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: "2002-05-14"
+        address:
+          type: string
+          nullable: true
+          example: "123 Great East Road, Lusaka"
+        emergency_contact:
+          type: string
+          nullable: true
+          example: "John Phiri (+260977654321)"
+        sex:
+          type: string
+          enum:
+            - male
+            - female
+          example: "female"
+        marital_status:
+          type: string
+          enum:
+            - single
+            - married
+            - widow
+            - divorced
+          example: "single"
+        nationality:
+          type: string
+          default: "Zambian"
+          example: "Zambian"
+        nrc_number:
+          type: string
+          nullable: true
+          description: "Identity number for local applicants (e.g. 123456/11/1)."
+          example: "123456/11/1"
+        passport_number:
+          type: string
+          nullable: true
+          description: "Passport number for international applicants."
+          example: "Z1234567"
+        intake:
+          type: string
+          enum:
+            - January
+            - May
+            - September
+          example: "January"
+        study_mode:
+          type: string
+          enum:
+            - full_time
+            - part_time
+            - distance_learning
+            - online
+          example: "full_time"
+        nrc_file_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "UUID of pre-uploaded NRC file."
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        passport_file_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "UUID of pre-uploaded Passport file."
+          example: "b4c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0c"
+        certificate_file_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "UUID of pre-uploaded academic certificate file."
+          example: "c5c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0d"
+
+    ApplicationResponseData:
+      type: object
+      properties:
+        user_public_id:
+          type: string
+          format: uuid
+        student_public_id:
+          type: string
+          format: uuid
+        application_number:
+          type: string
+          example: "STU-2026-001"
+
+    ApplicationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Application submitted successfully."
+        data:
+          $ref: '#/components/schemas/ApplicationResponseData'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@institution.edu"
+        password:
+          type: string
+          format: password
+          example: "SecretPass123!"
+
+    StudentEnrollmentRequest:
+      type: object
+      required:
+        - curriculum_public_ids
+      properties:
+        curriculum_public_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    DocumentUploadRequest:
+      type: object
+      required:
+        - collection
+        - file_public_id
+      properties:
+        collection:
+          type: string
+          example: "TRANSCRIPT"
+        file_public_id:
+          type: string
+          format: uuid
+
+    SchoolRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "School of Computing & Engineering"
+        description:
+          type: string
+          example: "Faculty of Computer Science and Engineering."
+        dean_user_public_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    DeanRequest:
+      type: object
+      required:
+        - user_public_id
+        - school_public_id
+        - first_name
+        - last_name
+      properties:
+        user_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        school_public_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        first_name:
+          type: string
+          example: "Emmanuel"
+        middle_name:
+          type: string
+          nullable: true
+          example: "Kasonde"
+        last_name:
+          type: string
+          example: "Sikazwe"
+        employee_number:
+          type: string
+          nullable: true
+          example: "DEN-001"
+
+    ProgramRequest:
+      type: object
+      required:
+        - school_public_id
+        - code
+        - title
+        - level
+        - duration_value
+        - duration_unit
+      properties:
+        school_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        code:
+          type: string
+          example: "BSCS"
+        title:
+          type: string
+          example: "B.Sc. Computer Science"
+        level:
+          type: string
+          enum:
+            - Certificate
+            - Diploma
+            - Degree
+            - Post-graduate Diploma
+          example: "Degree"
+        duration_value:
+          type: integer
+          minimum: 1
+          example: 4
+        duration_unit:
+          type: string
+          enum:
+            - weeks
+            - months
+            - years
+          default: "years"
+          example: "years"
+        short_description:
+          type: string
+          nullable: true
+          example: "Four-year degree focused on software engineering and algorithms."
+        long_description:
+          type: string
+          nullable: true
+          example: "Detailed overview covering core subjects, electives, and graduation requirements."
+
+    RequirementRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          example: "5 O-Level Credits including Mathematics and English"
+
+    CurriculumRequest:
+      type: object
+      required:
+        - program_public_id
+        - course_public_id
+        - year
+      properties:
+        program_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        course_public_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        lecturer_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "c4d9f6a2-5b1e-4c2d-8e3f-6a7b8c9d0e1f"
+        year:
+          type: integer
+          minimum: 1
+          example: 1
+          description: "Academic year level for the course within the program (e.g., 1, 2, 3, 4)."
+
+    CourseRequest:
+      type: object
+      required:
+        - school_public_id
+        - code
+        - title
+        - description
+        - credits
+      properties:
+        school_public_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "CS101"
+        title:
+          type: string
+          example: "Introduction to Computer Science"
+        description:
+          type: string
+        credits:
+          type: integer
+          example: 3
+
+    MaterialRequest:
+      type: object
+      required:
+        - curriculum_public_id
+        - title
+      properties:
+        curriculum_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        title:
+          type: string
+          example: "Lecture 1: Introduction to Data Structures"
+        description:
+          type: string
+          nullable: true
+          example: "Slides and source code examples for array and list structures."
+        category:
+          type: string
+          enum:
+            - lecture_slides
+            - assignment_brief
+            - syllabus
+            - past_paper
+            - other
+          default: "lecture_slides"
+          example: "lecture_slides"
+        file_public_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example: ["a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"]
+
+    AssessmentRequest:
+      type: object
+      required:
+        - title
+        - type
+        - weight_percentage
+      properties:
+        title:
+          type: string
+          example: "Term 1 Assessment"
+        description:
+          type: string
+          nullable: true
+          example: "Continuous assessment covering units 1 through 4."
+        type:
+          type: string
+          enum:
+            - End of Term
+            - Final Exam
+          default: "End of Term"
+          example: "End of Term"
+        term:
+          type: integer
+          minimum: 1
+          maximum: 3
+          nullable: true
+          example: 1
+          description: "Academic term number (e.g., 1, 2, or 3)."
+        weight_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 20.0
+        max_score:
+          type: number
+          format: float
+          default: 100.0
+          example: 100.0
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-11-30T23:59:59Z"
+
+    GradeRequest:
+      type: object
+      required:
+        - items
+      properties:
+        assessment_public_id:
+          type: string
+          format: uuid
+          description: "Required if not passed in the URL route parameter."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        items:
+          type: array
+          description: "List of student grades to insert or update."
+          items:
+            type: object
+            required:
+              - student_public_id
+              - score
+            properties:
+              student_public_id:
+                type: string
+                format: uuid
+                example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+              score:
+                type: number
+                format: float
+                nullable: true
+                minimum: 0
+                description: "Numeric mark attained. Null indicates missed/exempted."
+                example: 85.5
+              remarks:
+                type: string
+                nullable: true
+                description: "Optional lecturer notes/feedback per student."
+                example: "Excellent essay structure."
+
+    LecturerRequest:
+      type: object
+      required:
+        - school_public_id
+        - email
+        - first_name
+        - last_name
+      properties:
+        school_public_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        email:
+          type: string
+          format: email
+          example: "david.banda@example.com"
+        phone:
+          type: string
+          nullable: true
+          example: "+260977112233"
+        first_name:
+          type: string
+          example: "David"
+        middle_name:
+          type: string
+          nullable: true
+          example: "Kasonde"
+        last_name:
+          type: string
+          example: "Banda"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: "1985-07-20"
+        address:
+          type: string
+          nullable: true
+          example: "Plot 45, Great East Road, Lusaka"
+        emergency_contact:
+          type: string
+          nullable: true
+          example: "Mary Banda (+260977112233)"
+
+    AdminRequest:
+      type: object
+      required:
+        - user_public_id
+        - first_name
+        - last_name
+        - employee_number
+        - department
+        - position
+      properties:
+        user_public_id:
+          type: string
+          format: uuid
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        first_name:
+          type: string
+          example: "Alice"
+        middle_name:
+          type: string
+          nullable: true
+          example: "Chileshe"
+        last_name:
+          type: string
+          example: "Tembo"
+        employee_number:
+          type: string
+          example: "ADM-102"
+        department:
+          type: string
+          example: "Admissions"
+        position:
+          type: string
+          example: "Registrar"
+
+    AnnouncementRequest:
+      type: object
+      required:
+        - title
+        - content
+        - type
+        - target_level
+        - target_name
+        - author
+      properties:
+        title:
+          type: string
+          example: "End of Semester Examinations Timetable"
+        content:
+          type: string
+          example: "The draft timetable for the upcoming end of semester examinations has been published."
+        type:
+          type: string
+          enum:
+            - General
+            - Timetable
+            - Assignment
+            - Alert
+          default: "General"
+          example: "Timetable"
+        target_level:
+          type: string
+          enum:
+            - College
+            - School
+            - Program
+          default: "College"
+          example: "College"
+        target_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Public UUID of targeted School or Program. Null for College level."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        target_name:
+          type: string
+          example: "Entire College"
+        author:
+          type: string
+          example: "Academic Registrar"
+        attachment_file_public_ids:
+          type: array
+          nullable: true
+          description: "List of uploaded file UUIDs to link via the fileables pivot table."
+          items:
+            type: string
+            format: uuid
+          example: [ "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b" ]

@@ -1,0 +1,143 @@
+#import scalars.graphql
+#import enums.graphql
+#import types/*.graphql
+
+type Query {
+    # =========================================================================
+    # AUTHENTICATED USER CONTEXT
+    # =========================================================================
+
+    "Get the currently authenticated user"
+    me: User @auth
+
+    # =========================================================================
+    # PUBLIC READ QUERIES (Unrestricted)
+    # =========================================================================
+
+    "List all available academic programs"
+    programs(
+        schoolId: ID @eq(key: "school_id")
+    ): [Program!]! @paginate(type: CONNECTION)
+
+    "Find a specific program by its public ID"
+    program(id: ID! @eq(key: "public_id")): Program @find
+
+    "List all schools/faculties"
+    schools: [School!]! @paginate(type: CONNECTION)
+
+    "Find a specific school by its public ID"
+    school(id: ID! @eq(key: "public_id")): School @find
+
+    "List all courses"
+    courses: [Course!]! @paginate(type: CONNECTION)
+
+    "Find a course by its public ID"
+    course(id: ID! @eq(key: "public_id")): Course @find
+
+    "List all curricula with optional filters"
+    curricula(
+        programId: ID @eq(key: "program_id")
+        courseId: ID @eq(key: "course_id")
+        year: Int @eq
+    ): [Curriculum!]! @paginate(type: CONNECTION)
+
+    "Find a specific curriculum entry by its public ID"
+    curriculum(id: ID! @eq(key: "public_id")): Curriculum @find
+
+    "List all announcements with optional filters"
+    announcements(
+        type: AnnouncementType @eq
+        targetLevel: TargetLevel @eq(key: "target_level")
+    ): [Announcement!]!
+    @paginate(type: CONNECTION)
+    @orderBy(column: "created_at", direction: DESC)
+
+    "Find an announcement by its public ID"
+    announcement(id: ID! @eq(key: "public_id")): Announcement @find
+
+    # =========================================================================
+    # PROTECTED READ QUERIES (Authorized via Laravel Policies)
+    # =========================================================================
+
+    "List system users"
+    users: [User!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\User")
+
+    "Find a specific user by public ID"
+    user(id: ID! @eq(key: "public_id")): User
+    @find
+    @can(ability: "view", find: "id")
+
+    "List enrolled/applied students"
+    students(
+        status: StudentStatus @eq
+        programId: ID @eq(key: "program_id")
+    ): [Student!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Student")
+
+    "Find a specific student profile"
+    student(id: ID! @eq(key: "public_id")): Student
+    @find
+    @can(ability: "view")
+
+    "List lecturers"
+    lecturers: [Lecturer!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Lecturer")
+
+    "Find a specific lecturer profile"
+    lecturer(id: ID! @eq(key: "public_id")): Lecturer
+    @find
+    @can(ability: "viewAny", model: "App\\Models\\Lecturer")
+
+    "List administrative staff"
+    admins: [Admin!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Admin")
+
+    "List user notifications"
+    notifications: [Notification!]!
+    @paginate(builder: "App\\GraphQL\\Queries\\NotificationsResolver")
+    @guard
+
+    "Count user unread notifications"
+    unreadNotificationsCount: Int!
+    @field(resolver: "App\\GraphQL\\Queries\\UnreadNotificationsCountResolver")
+    @guard
+}
+
+# =========================================================================
+# NOTIFICATION TYPES
+# =========================================================================
+
+type NotificationData {
+    title: String!
+    body: String!
+    action_url: String
+    type: String
+    data: JSON
+}
+
+type Notification {
+    id: ID!
+    type: String!
+    data: NotificationData!
+    read_at: String
+    created_at: String!
+}
+
+# =========================================================================
+# MUTATIONS
+# =========================================================================
+
+type Mutation {
+    markNotificationAsRead(id: ID!): Notification
+    @field(resolver: "App\\GraphQL\\Mutations\\MarkNotificationAsReadResolver")
+    @guard
+
+    markAllNotificationsAsRead: Boolean!
+    @field(resolver: "App\\GraphQL\\Mutations\\MarkAllNotificationsAsReadResolver")
+    @guard
+}

@@ -1,0 +1,14 @@
+type Announcement {
+    id: ID! @rename(attribute: "public_id")
+    title: String!
+    content: String!
+    type: AnnouncementType!
+    targetLevel: TargetLevel! @rename(attribute: "target_level")
+    targetId: ID @rename(attribute: "target_id")
+    targetName: String! @rename(attribute: "target_name")
+    author: String!
+    authorUser: User @belongsTo(relation: "author")
+    attachment: File @belongsTo(relation: "attachment")
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}

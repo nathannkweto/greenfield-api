@@ -1,0 +1,41 @@
+type Student {
+    id: ID! @rename(attribute: "public_id")
+    applicationNumber: String! @rename(attribute: "application_number")
+    admissionNumber: String @rename(attribute: "admission_number")
+    studentNumber: String @rename(attribute: "student_number")
+
+    firstName: String! @rename(attribute: "first_name")
+    middleNames: String @rename(attribute: "middle_names")
+    lastName: String! @rename(attribute: "last_name")
+    email: String! @rename(attribute: "email")
+    phone: String! @rename(attribute: "phone")
+    dob: Date @rename(attribute: "dob")
+    address: String @rename(attribute: "address")
+    emergencyContact: String @rename(attribute: "emergency_contact")
+
+    sex: String! @rename(attribute: "sex")
+    maritalStatus: String @rename(attribute: "marital_status")
+    nationality: String! @rename(attribute: "nationality")
+    nrcNumber: String @rename(attribute: "nrc_number")
+    passportNumber: String @rename(attribute: "passport_number")
+
+    intake: String @rename(attribute: "intake")
+    studyMode: String @rename(attribute: "study_mode")
+    status: StudentStatus!
+
+    applicationDate: DateTime! @rename(attribute: "application_date")
+    admissionDate: DateTime @rename(attribute: "admission_date")
+    rejectionDate: DateTime @rename(attribute: "rejection_date")
+    graduationDate: DateTime @rename(attribute: "graduation_date")
+    cgpa: Float!
+    creditsCompleted: Int! @rename(attribute: "credits_completed")
+
+    user: User! @belongsTo
+    program: Program! @belongsTo
+    enrollments: [Enrollment!]! @hasMany
+    invoices: [Invoice!]! @hasMany
+    transactions: [Transaction!]! @hasMany
+    assessmentResults: [AssessmentResult!]! @hasMany(relation: "assessment_results")
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
