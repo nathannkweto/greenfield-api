@@ -960,6 +960,7 @@ components:
     ApplicationRequest:
       type: object
       required:
+        - user_public_id
         - program_public_id
         - first_name
         - last_name
@@ -969,7 +970,14 @@ components:
         - marital_status
         - intake
         - study_mode
+        - certificate_file_public_id
+        - deposit_slip_file_public_id
       properties:
+        user_public_id:
+          type: string
+          format: uuid
+          description: "UUID of the authenticated user submitting the application."
+          example: "d3b07384-d113-424a-4ed0-b23d9021a02f"
         program_public_id:
           type: string
           format: uuid
@@ -1065,6 +1073,18 @@ components:
           nullable: true
           description: "UUID of pre-uploaded academic certificate file."
           example: "c5c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0d"
+        deposit_slip_file_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "UUID of pre-uploaded application fee deposit slip file."
+          example: "d6c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0e"
+        exemption_transcript_file_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "UUID of pre-uploaded exemption transcript file (optional)."
+          example: "e7c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0f"
 
     ApplicationResponseData:
       type: object

@@ -9,11 +9,13 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class File
- * 
- * @property string $id
+ *
+ * @property int $id
+ * @property string $public_id
  * @property string $disk
  * @property string $path
  * @property string $original_name
@@ -22,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $uploaded_by_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property User|null $user
  * @property Collection|Fileable[] $fileables
  *
@@ -31,7 +33,6 @@ use Illuminate\Database\Eloquent\Model;
 class File extends Model
 {
 	protected $table = 'files';
-	public $incrementing = false;
 
 	protected $casts = [
 		'size' => 'int',
@@ -39,6 +40,7 @@ class File extends Model
 	];
 
 	protected $fillable = [
+		'public_id',
 		'disk',
 		'path',
 		'original_name',
@@ -46,6 +48,30 @@ class File extends Model
 		'size',
 		'uploaded_by_id'
 	];
+
+    /**
+     * Compute full asset URL for GraphQL frontend.
+     */
+    public function getUrlAttribute(): string
+    {
+        return Storage::disk($this->disk)->url($this->path);
+    }
+
+    /**
+     * Retrieve the pivot collection when loaded via morphToMany.
+     */
+    public function getCollectionAttribute(): ?string
+    {
+        return $this->pivot->collection ?? null;
+    }
+
+    /**
+     * Retrieve the pivot sort_order when loaded via morphToMany.
+     */
+    public function getSortOrderAttribute(): ?int
+    {
+        return $this->pivot->sort_order ?? null;
+    }
 
 	public function user()
 	{

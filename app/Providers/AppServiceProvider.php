@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Models\Applicant;
+use App\Models\File;
 use App\Models\User;
 use App\Observers\ApplicantObserver;
 use App\Services\Api\ApplicantApiService;
 use App\Services\Api\AuthApiService;
 use App\Services\Api\CurriculaApiService;
+use App\Services\Api\FileApiService;
 use App\Services\Api\NotificationsApiService;
 use App\Services\Api\PublicApiService;
 use Illuminate\Support\Facades\Gate;
@@ -20,6 +22,7 @@ use OpenAPI\Server\Api\ApplicantsApiInterface;
 use OpenAPI\Server\Api\AuthApiInterface;
 use OpenAPI\Server\Api\CoursesApiInterface;
 use OpenAPI\Server\Api\CurriculaApiInterface;
+use OpenAPI\Server\Api\FilesApiInterface;
 use OpenAPI\Server\Api\FinanceApiInterface;
 use OpenAPI\Server\Api\LecturersApiInterface;
 use OpenAPI\Server\Api\NotificationsApiInterface;
@@ -62,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResultsApiInterface::class, ResultApiService::class);
         $this->app->bind(SchoolsApiInterface::class, SchoolApiService::class);
         $this->app->bind(StudentsApiInterface::class, StudentApiService::class);
+        $this->app->bind(FilesApiInterface::class, FileApiService::class);
     }
 
     /**

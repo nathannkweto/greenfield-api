@@ -38,4 +38,7 @@ type Student {
     assessmentResults: [AssessmentResult!]! @hasMany(relation: "assessment_results")
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
+
+    "Attached files and uploaded documents"
+    files(collection: String @eq(key: "fileables.collection")): [File!]! @morphToMany
 }

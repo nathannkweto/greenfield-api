@@ -10,7 +10,8 @@ return new class extends Migration
     {
         // 1. Storage table
         Schema::create('files', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
+            $table->uuid('public_id')->unique();
             $table->string('disk')->default('s3');
             $table->string('path');
             $table->string('original_name');
@@ -22,7 +23,7 @@ return new class extends Migration
 
         // 2. Polymorphic pivot table
         Schema::create('fileables', function (Blueprint $table) {
-            $table->foreignUuid('file_id')->constrained('files')->cascadeOnDelete();
+            $table->foreignId('file_id')->constrained('files')->cascadeOnDelete();
             $table->uuidMorphs('fileable'); // fileable_type + fileable_id
             $table->string('collection')->default('attachment'); // 'gallery', 'submission', 'avatar', 'brochure'
             $table->unsignedInteger('sort_order')->default(0);   // for galleries / re-ordering

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Fileable
  * 
- * @property string $file_id
+ * @property int $file_id
  * @property string $fileable_type
  * @property string $fileable_id
  * @property string $collection
@@ -30,6 +30,7 @@ class Fileable extends Model
 	public $incrementing = false;
 
 	protected $casts = [
+		'file_id' => 'int',
 		'sort_order' => 'int'
 	];
 

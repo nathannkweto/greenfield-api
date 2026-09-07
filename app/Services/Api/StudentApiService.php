@@ -47,14 +47,25 @@ class StudentApiService implements StudentsApiInterface
 
         return DB::transaction(function () use ($ApplicationRequest, $program) {
             /** @var User $user */
-            $user = User::query()->firstOrCreate(
-                ['email' => $ApplicationRequest->email],
-                [
-                    'public_id' => (string) Str::uuid(),
-                    'name' => trim($ApplicationRequest->first_name . ' ' . $ApplicationRequest->last_name),
-                    'password' => bcrypt(Str::random(16)),
-                ]
-            );
+            $user = null;
+
+            if (!empty($ApplicationRequest->user_public_id)) {
+                $user = User::query()
+                    ->where('public_id', $ApplicationRequest->user_public_id)
+                    ->orWhere('id', $ApplicationRequest->user_public_id)
+                    ->first();
+            }
+
+            if (!$user) {
+                $user = User::query()->firstOrCreate(
+                    ['email' => $ApplicationRequest->email],
+                    [
+                        'public_id' => (string) Str::uuid(),
+                        'name' => trim($ApplicationRequest->first_name . ' ' . $ApplicationRequest->last_name),
+                        'password' => bcrypt(Str::random(16)),
+                    ]
+                );
+            }
 
             // Generate Application Number: APP + YY + SEQ
             $yearShort = date('y');
@@ -75,7 +86,7 @@ class StudentApiService implements StudentsApiInterface
                 'last_name' => $ApplicationRequest->last_name,
                 'email' => $ApplicationRequest->email,
                 'phone' => $ApplicationRequest->phone,
-                'dob' => $ApplicationRequest->dob,
+                'dob' => $ApplicationRequest->dob?->format('Y-m-d'),
                 'address' => $ApplicationRequest->address,
                 'emergency_contact' => $ApplicationRequest->emergency_contact,
                 'sex' => $this->resolveValue($ApplicationRequest->sex),
@@ -85,20 +96,28 @@ class StudentApiService implements StudentsApiInterface
                 'passport_number' => $ApplicationRequest->passport_number,
                 'intake' => $this->resolveValue($ApplicationRequest->intake),
                 'study_mode' => $this->resolveValue($ApplicationRequest->study_mode),
-                'status' => 'applied',
+                'status' => 'Pending',
                 'application_date' => now(),
             ]);
 
-            // Link pre-uploaded files via HasFiles trait
+            // Map all pre-uploaded document collections
             $fileCollections = array_filter([
                 'nrc' => $ApplicationRequest->nrc_file_public_id,
                 'passport' => $ApplicationRequest->passport_file_public_id,
                 'certificate' => $ApplicationRequest->certificate_file_public_id,
+                'deposit_slip' => $ApplicationRequest->deposit_slip_file_public_id,
+                'exemption_transcript' => $ApplicationRequest->exemption_transcript_file_public_id,
             ]);
 
-            foreach ($fileCollections as $collection => $fileId) {
-                if ($fileId && File::query()->where('id', $fileId)->exists()) {
-                    $student->attachFile($fileId, $collection);
+            foreach ($fileCollections as $collection => $fileIdentifier) {
+                /** @var File|null $file */
+                $file = File::query()
+                    ->where('public_id', $fileIdentifier)
+                    ->orWhere('id', $fileIdentifier)
+                    ->first();
+
+                if ($file) {
+                    $student->attachFile($file, $collection);
                 }
             }
 
@@ -192,7 +211,10 @@ class StudentApiService implements StudentsApiInterface
         }
 
         /** @var File|null $file */
-        $file = File::query()->find($DocumentUploadRequest->file_public_id);
+        $file = File::query()
+            ->where('public_id', $DocumentUploadRequest->file_public_id)
+            ->orWhere('id', $DocumentUploadRequest->file_public_id)
+            ->first();
 
         if (!$file) {
             return new ErrorResponse(
@@ -201,13 +223,13 @@ class StudentApiService implements StudentsApiInterface
             );
         }
 
-        $student->attachFile($file->id, $DocumentUploadRequest->collection);
+        $student->attachFile($file, $DocumentUploadRequest->collection);
 
         return new StandardResponse(
             status: 'success',
             message: 'Document attached successfully.',
             data: new class(
-                file_public_id: (string) $file->id,
+                file_public_id: $file->public_id,
                 collection: $DocumentUploadRequest->collection
             ) {
                 public function __construct(

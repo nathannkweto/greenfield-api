@@ -20,9 +20,17 @@ trait HasFiles
     /**
      * Helper to attach a file with a collection.
      */
-    public function attachFile(string|File $file, string $collection = 'attachment', int $sortOrder = 0): void
+    public function attachFile(File|string|int $file, string $collection = 'attachment', int $sortOrder = 0): void
     {
-        $fileId = $file instanceof File ? $file->id : $file;
+        $fileId = match (true) {
+            $file instanceof File => $file->id,
+            is_numeric($file) => (int) $file,
+            default => File::query()->where('public_id', $file)->value('id'),
+        };
+
+        if (!$fileId) {
+            return;
+        }
 
         $this->files()->attach($fileId, [
             'collection' => $collection,

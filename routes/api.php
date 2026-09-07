@@ -37,10 +37,13 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
     |--------------------------------------------------------------------------
     | System configuration, finance, enrollments, and user management.
     */
-    Route::middleware('role:admin')->group(function () {
+     Route::POST('/v1/files/upload', [\OpenAPI\Server\Http\Controllers\FilesController::class, 'filesUploadPost'])->name('files.files.upload.post');
+     Route::POST('/v1/apply', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'applyPost'])->name('students.apply.post');
+
+     Route::middleware('role:admin')->group(function () {
         // Admins
-        Route::POST('/api/v1/admins/create', [AdminsController::class, 'adminsCreatePost'])->name('admins.admins.create.post');
-        Route::POST('/api/v1/admins/{public_id}/edit', [AdminsController::class, 'adminsPublicIdEditPost'])->name('admins.admins.public.id.edit.post');
+        Route::POST('/v1/admins/create', [AdminsController::class, 'adminsCreatePost'])->name('admins.admins.create.post');
+        Route::POST('/v1/admins/{public_id}/edit', [AdminsController::class, 'adminsPublicIdEditPost'])->name('admins.admins.public.id.edit.post');
 
         // Schools & Programs
         Route::POST('/v1/schools/create', [SchoolsController::class, 'schoolsCreatePost'])->name('schools.schools.create.post');

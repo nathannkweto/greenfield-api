@@ -34,6 +34,9 @@ class ApplicationRequest
 {
     /**
     *
+    * UUID of the authenticated user submitting the application.
+    * @param string $user_public_id
+    *
     * 
     * @param string $program_public_id
     *
@@ -90,9 +93,16 @@ class ApplicationRequest
     *
     * UUID of pre-uploaded academic certificate file.
     * @param null | string $certificate_file_public_id
+    *
+    * UUID of pre-uploaded application fee deposit slip file.
+    * @param null | string $deposit_slip_file_public_id
+    *
+    * UUID of pre-uploaded exemption transcript file (optional).
+    * @param null | string $exemption_transcript_file_public_id
     */
 
     public function __construct(
+        public string $user_public_id,
         public string $program_public_id,
         public string $first_name,
         public string $last_name,
@@ -112,6 +122,8 @@ class ApplicationRequest
         public ?string $nrc_file_public_id = null,
         public ?string $passport_file_public_id = null,
         public ?string $certificate_file_public_id = null,
+        public ?string $deposit_slip_file_public_id = null,
+        public ?string $exemption_transcript_file_public_id = null,
     ) {}
 }
 

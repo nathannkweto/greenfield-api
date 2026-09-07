@@ -1,9 +1,17 @@
 type File {
     id: ID! @rename(attribute: "public_id")
-    fileName: String! @rename(attribute: "file_name")
-    fileType: FileType! @rename(attribute: "file_type")
-    fileSize: String! @rename(attribute: "file_size")
-    filePath: String! @rename(attribute: "file_path")
+    originalName: String! @rename(attribute: "original_name")
+    mimeType: String! @rename(attribute: "mime_type")
+    size: Int!
+    disk: String!
+    path: String!
+    url: String @field(resolver: "App\\Models\\File@getUrlAttribute")
+
+    # Pivot attributes resolved via model accessors
+    collection: String
+    sortOrder: Int @rename(attribute: "sort_order")
+
+    uploadedBy: User @belongsTo(relation: "user")
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }

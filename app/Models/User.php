@@ -39,7 +39,6 @@ class User extends Authenticatable
 {
 	use HasPortalRoles;
     use Notifiable;
-
 	protected $table = 'users';
 
 	protected $hidden = [

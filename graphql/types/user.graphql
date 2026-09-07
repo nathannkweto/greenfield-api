@@ -1,6 +1,7 @@
 type User {
     id: ID! @rename(attribute: "public_id")
     email: String!
+    phone: String
     admins: [Admin!]! @hasMany
     lecturers: [Lecturer!]! @hasMany
     students: [Student!]! @hasMany
