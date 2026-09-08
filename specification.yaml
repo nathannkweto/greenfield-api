@@ -1467,17 +1467,33 @@ components:
     AdminRequest:
       type: object
       required:
-        - user_public_id
         - first_name
         - last_name
         - employee_number
         - department
         - position
       properties:
+        # Existing User reference
         user_public_id:
           type: string
           format: uuid
+          nullable: true
+          description: Optional. Links to an existing user. If omitted, a new user account will be created.
           example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+
+        # User Account Fields (Used when user_public_id is omitted)
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Required if user_public_id is omitted.
+          example: "alice.tembo@university.edu"
+        phone:
+          type: string
+          nullable: true
+          example: "+260971234567"
+
+        # Admin Profile Fields
         first_name:
           type: string
           example: "Alice"

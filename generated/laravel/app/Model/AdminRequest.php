@@ -34,8 +34,14 @@ class AdminRequest
 {
     /**
     *
+    * Optional. Links to an existing user. If omitted, a new user account will be created.
+    * @param null | string $user_public_id
+    *
+    * Required if user_public_id is omitted.
+    * @param null | string $email
+    *
     * 
-    * @param string $user_public_id
+    * @param null | string $phone
     *
     * 
     * @param string $first_name
@@ -57,12 +63,14 @@ class AdminRequest
     */
 
     public function __construct(
-        public string $user_public_id,
         public string $first_name,
         public string $last_name,
         public string $employee_number,
         public string $department,
         public string $position,
+        public ?string $user_public_id = null,
+        public ?string $email = null,
+        public ?string $phone = null,
         public ?string $middle_name = null,
     ) {}
 }
