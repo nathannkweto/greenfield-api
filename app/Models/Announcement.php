@@ -6,12 +6,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFiles;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Announcement
- * 
+ *
  * @property int $id
  * @property string $public_id
  * @property string $title
@@ -24,13 +25,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $author_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property User|null $user
  *
  * @package App\Models
  */
 class Announcement extends Model
 {
+	use HasFiles;
 	protected $table = 'announcements';
 
 	protected $casts = [

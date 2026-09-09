@@ -33,7 +33,6 @@ type Student {
     user: User! @belongsTo
     program: Program! @belongsTo
     enrollments: [Enrollment!]! @hasMany
-    invoices: [Invoice!]! @hasMany
     transactions: [Transaction!]! @hasMany
     assessmentResults: [AssessmentResult!]! @hasMany(relation: "assessment_results")
     createdAt: DateTime! @rename(attribute: "created_at")
@@ -41,4 +40,8 @@ type Student {
 
     "Attached files and uploaded documents"
     files(collection: String @eq(key: "fileables.collection")): [File!]! @morphToMany
+
+    account: Account @morphOne
+    studentFees: [StudentFee!]! @hasMany(relation: "studentFees")
+    fees: [Fee!]! @morphMany
 }

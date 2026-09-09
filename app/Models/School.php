@@ -6,13 +6,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFees;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class School
- * 
+ *
  * @property int $id
  * @property string $public_id
  * @property string $name
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $dean_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property User|null $user
  * @property Collection|Course[] $courses
  * @property Collection|Dean[] $deans
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class School extends Model
 {
+	use HasFees;
 	protected $table = 'schools';
 
 	protected $casts = [

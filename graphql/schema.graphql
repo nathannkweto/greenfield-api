@@ -106,6 +106,71 @@ type Query {
     unreadNotificationsCount: Int!
     @field(resolver: "App\\GraphQL\\Queries\\UnreadNotificationsCountResolver")
     @guard
+
+    # =========================================================================
+    # FINANCIAL QUERIES
+    # =========================================================================
+
+    "List all master fee templates"
+    fees: [Fee!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Fee")
+
+    "Find a specific fee template"
+    fee(id: ID!): Fee
+    @find
+    @can(ability: "view")
+
+    "List assigned student fees"
+    studentFees(
+        studentId: ID @eq(key: "student_id")
+        feeId: ID @eq(key: "fee_id")
+    ): [StudentFee!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\StudentFee")
+
+    "Find a specific student fee entry"
+    studentFee(id: ID!): StudentFee
+    @find
+    @can(ability: "view")
+
+    "List fee payment records"
+    feePayments(
+        studentFeeId: ID @eq(key: "student_fee_id")
+        transactionId: ID @eq(key: "transaction_id")
+    ): [FeePayment!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\FeePayment")
+
+    "Find a specific fee payment record"
+    feePayment(id: ID!): FeePayment
+    @find
+    @can(ability: "view")
+
+    "List financial accounts"
+    accounts: [Account!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Account")
+
+    "Find a specific account"
+    account(id: ID!): Account
+    @find
+    @can(ability: "view")
+
+    "List transactions"
+    transactions: [Transaction!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\Transaction")
+
+    "Find a specific transaction"
+    transaction(id: ID!): Transaction
+    @find
+    @can(ability: "view")
+
+    "List physical receipt books"
+    receiptBooks: [ReceiptBook!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\ReceiptBook")
 }
 
 # =========================================================================

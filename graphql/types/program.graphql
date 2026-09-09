@@ -24,7 +24,9 @@ type Program {
     school: School! @belongsTo
     requirements: [Requirement!]! @hasMany
     curricula: [Curriculum!]! @hasMany
-    students: [Student!]! @hasMany
+    students(status: StudentStatus @eq): [Student!]! @hasMany
+
+    fees: [Fee!]! @morphMany
 
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")

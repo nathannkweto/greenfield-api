@@ -1,27 +1,90 @@
-type Invoice {
-    id: ID! @rename(attribute: "public_id")
+# =========================================================================
+# POLYMORPHIC UNIONS
+# =========================================================================
+
+"Entities that can own fee templates"
+union Feeable = Program | School | Student
+
+"Entities that can maintain financial ledgers"
+union Accountable = Student | User
+
+# =========================================================================
+# TYPES
+# =========================================================================
+
+"Master fee templates"
+type Fee {
+    id: ID!
     title: String!
-    type: String!
-    amount: Float!
-    currency: String!
-    dueDate: DateTime! @rename(attribute: "due_date")
-    status: InvoiceStatus!
+    amountZmw: Float! @rename(attribute: "amount_zmw")
+    amountUsd: Float @rename(attribute: "amount_usd")
+    frequency: FeeFrequency!
+    feeable: Feeable @morphTo
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+"Snapshot of fees assigned to individual students"
+type StudentFee {
+    id: ID!
+    amountZmw: Float! @rename(attribute: "amount_zmw")
+    amountUsd: Float @rename(attribute: "amount_usd")
     student: Student! @belongsTo
+    fee: Fee! @belongsTo
+    payments: [FeePayment!]! @hasMany
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+"Double-entry ledger account"
+type Account {
+    id: ID!
+    accountNumber: String! @rename(attribute: "account_number")
+    debitTransactions: [Transaction!]! @hasMany(relation: "debitTransactions")
+    creditTransactions: [Transaction!]! @hasMany(relation: "creditTransactions")
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+"Physical paper receipt book assigned to cashiers"
+type ReceiptBook {
+    id: ID!
+    bookNumber: String! @rename(attribute: "book_number")
+    startNumber: Int! @rename(attribute: "start_number")
+    endNumber: Int! @rename(attribute: "end_number")
+    currentNumber: Int @rename(attribute: "current_number")
+    assignedTo: User! @belongsTo(relation: "assignedToUser")
+    status: ReceiptBookStatus!
     transactions: [Transaction!]! @hasMany
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }
 
+"Double-entry transaction record"
 type Transaction {
-    id: ID! @rename(attribute: "public_id")
+    id: ID!
     amount: Float!
-    currency: String!
-    method: PaymentMethod!
-    status: PaymentStatus!
-    referenceCode: String! @rename(attribute: "reference_code")
-    transactionDate: DateTime! @rename(attribute: "transaction_date")
-    student: Student! @belongsTo
-    invoice: Invoice @belongsTo
+    referenceNumber: String! @rename(attribute: "reference_number")
+    gatewayReference: String @rename(attribute: "gateway_reference")
+    paymentMethod: PaymentMethod! @rename(attribute: "payment_method")
+    manualReceiptNumber: String @rename(attribute: "manual_receipt_number")
+
+    debitAccount: Account! @belongsTo(relation: "debitAccount")
+    creditAccount: Account! @belongsTo(relation: "creditAccount")
+    receiptBook: ReceiptBook @belongsTo(relation: "receiptBook")
+    cashier: User @belongsTo(relation: "cashier")
+    feePayments: [FeePayment!]! @hasMany(relation: "feePayments")
+
+    createdAt: DateTime! @rename(attribute: "created_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+}
+
+"Pivot table mapping payment transactions to student fees"
+type FeePayment {
+    id: ID!
+    amount: Float!
+    transaction: Transaction! @belongsTo
+    studentFee: StudentFee! @belongsTo(relation: "studentFee")
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }

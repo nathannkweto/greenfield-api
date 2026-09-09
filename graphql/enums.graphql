@@ -58,3 +58,24 @@ enum FileType {
     IMAGE @enum(value: "image")
     DOC @enum(value: "doc")
 }
+
+enum FeeFrequency {
+    MONTHLY @enum(value: "monthly")
+    TERMLY  @enum(value: "termly")
+    YEARLY  @enum(value: "yearly")
+    ONE_TIME @enum(value: "one_time")
+}
+
+enum ReceiptBookStatus {
+    ACTIVE
+    COMPLETED
+    LOST
+    CANCELLED
+}
+
+enum PaymentMethod {
+    CASH @enum(value: "cash")
+    BANK_TRANSFER @enum(value: "bank_transfer")
+    MOBILE_MONEY @enum(value: "mobile_money")
+    CARD @enum(value: "card")
+}

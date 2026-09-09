@@ -17,8 +17,9 @@ return new class extends Migration
             $table->foreignId('assessment_id')->constrained()->cascadeOnDelete();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->decimal('score', 8, 2)->nullable();
+            $table->boolean('is_published')->default(false);
             $table->timestamps();
-            
+
             $table->unique(['assessment_id', 'student_id']);
         });
     }

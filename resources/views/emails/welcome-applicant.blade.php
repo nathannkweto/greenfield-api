@@ -1,16 +1,16 @@
 @component('mail::message')
 # Welcome, {{ $applicant->first_name }}!
 
-Your applicant account has been successfully created. Below are your temporary login credentials:
+Your account on the Greenfield College platform has been successfully created. Below are your temporary login credentials:
 
-**Email:** {{ $applicant->email }}
+**Email:** {{ $applicant->email }}<br>
 **Password:** {{ $password }}
 
-@component('mail::button', ['url' => config('app.url') . '/login'])
+@component('mail::button', ['url' => config('app.frontend-url') . '/login'])
 Log In to Your Account
 @endcomponent
 
-Please log in and change your password as soon as possible.
+Please log in and continue your application.
 
 Thanks,<br>
 {{ config('app.name') }}

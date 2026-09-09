@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $assessment_id
  * @property int $student_id
  * @property float|null $score
+ * @property bool $is_published
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
@@ -32,14 +33,16 @@ class AssessmentResult extends Model
 	protected $casts = [
 		'assessment_id' => 'int',
 		'student_id' => 'int',
-		'score' => 'float'
+		'score' => 'float',
+		'is_published' => 'bool'
 	];
 
 	protected $fillable = [
 		'public_id',
 		'assessment_id',
 		'student_id',
-		'score'
+		'score',
+		'is_published'
 	];
 
 	public function assessment()

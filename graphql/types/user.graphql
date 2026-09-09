@@ -7,6 +7,11 @@ type User {
     students: [Student!]! @hasMany
     schools: [School!]! @hasMany(relation: "schools")
     applicants: [Applicant!]! @hasMany(relation: "applicants")
+
+    account: Account @morphOne
+    assignedReceiptBooks: [ReceiptBook!]! @hasMany(relation: "assignedReceiptBooks")
+    processedTransactions: [Transaction!]! @hasMany(relation: "processedTransactions")
+
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }

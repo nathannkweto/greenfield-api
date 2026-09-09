@@ -6,13 +6,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFiles;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Course
- * 
+ *
  * @property int $id
  * @property string $public_id
  * @property int $school_id
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $credits
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property School $school
  * @property Collection|CourseOffering[] $course_offerings
  * @property Collection|Curriculum[] $curricula
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Course extends Model
 {
+	use HasFiles;
 	protected $table = 'courses';
 
 	protected $casts = [

@@ -9,8 +9,8 @@ namespace App\Models;
 use App\Models\Traits\HasPortalRoles;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * Class User
@@ -30,8 +30,10 @@ use Illuminate\Notifications\Notifiable;
  * @property Collection|Dean[] $deans
  * @property Collection|File[] $files
  * @property Collection|Lecturer[] $lecturers
+ * @property Collection|ReceiptBook[] $receipt_books
  * @property Collection|School[] $schools
  * @property Collection|Student[] $students
+ * @property Collection|Transaction[] $transactions
  *
  * @package App\Models
  */
@@ -84,6 +86,11 @@ class User extends Authenticatable
 		return $this->hasMany(Lecturer::class);
 	}
 
+	public function receipt_books()
+	{
+		return $this->hasMany(ReceiptBook::class, 'assigned_to_user_id');
+	}
+
 	public function schools()
 	{
 		return $this->hasMany(School::class, 'dean_id');
@@ -92,5 +99,10 @@ class User extends Authenticatable
 	public function students()
 	{
 		return $this->hasMany(Student::class);
+	}
+
+	public function transactions()
+	{
+		return $this->hasMany(Transaction::class, 'cashier_id');
 	}
 }

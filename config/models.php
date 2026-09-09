@@ -541,9 +541,32 @@ return [
         'users' => [
             'use' => [
                 \App\Models\Traits\HasPortalRoles::class,
+                \App\Models\Traits\HasAccount::class,
             ],
         ],
         'students' => [
+            'use' => [
+                \App\Models\Traits\HasFiles::class,
+                \App\Models\Traits\HasAccount::class,
+                \App\Models\Traits\HasFees::class,
+            ],
+        ],
+        'programs' => [
+            'use' => [
+                \App\Models\Traits\HasFees::class,
+            ],
+        ],
+        'schools' => [
+            'use' => [
+                \App\Models\Traits\HasFees::class,
+            ],
+        ],
+        'courses' => [
+            'use' => [
+                \App\Models\Traits\HasFiles::class,
+            ],
+        ],
+        'announcements' => [
             'use' => [
                 \App\Models\Traits\HasFiles::class,
             ],

@@ -6,7 +6,9 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFees;
 use App\Models\Traits\HasFiles;
+use App\Models\Traits\HasTransactions;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -50,12 +52,15 @@ use Illuminate\Database\Eloquent\Model;
  * @property User $user
  * @property Collection|AssessmentResult[] $assessment_results
  * @property Collection|Enrollment[] $enrollments
+ * @property Collection|Fee[] $fees
  *
  * @package App\Models
  */
 class Student extends Model
 {
 	use HasFiles;
+	use HasFees;
+    use HasTransactions;
 	protected $table = 'students';
 
 	protected $casts = [
@@ -120,4 +125,15 @@ class Student extends Model
 	{
 		return $this->hasMany(Enrollment::class);
 	}
+
+	public function fees()
+	{
+		return $this->belongsToMany(Fee::class, 'student_fees')
+					->withPivot('id', 'amount_zmw', 'amount_usd')
+					->withTimestamps();
+	}
+    public function studentFees()
+    {
+        return $this->hasMany(StudentFee::class);
+    }
 }

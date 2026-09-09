@@ -3,13 +3,13 @@
 
 Your administrator account has been successfully created. Below are your account login credentials:
 
-**Email:** {{ $admin->user->email }}
+**Email:** {{ $admin->user->email }}<br>
 **Password:** {{ $password }}
 
-**Department:** {{ $admin->department }}
+**Department:** {{ $admin->department }}<br>
 **Position:** {{ $admin->position }}
 
-@component('mail::button', ['url' => config('app.url') . '/login'])
+@component('mail::button', ['url' => config('app.frontend-url') . '/login'])
 Log In to Administrative Portal
 @endcomponent
 

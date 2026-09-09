@@ -6,6 +6,8 @@ type School {
     programs: [Program!]! @hasMany
     courses: [Course!]! @hasMany
     lecturers: [Lecturer!]! @hasMany
+    fees: [Fee!]! @morphMany
+    
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }
