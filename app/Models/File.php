@@ -9,10 +9,11 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class File
- * 
+ *
  * @property int $id
  * @property string $public_id
  * @property string $disk
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $uploaded_by_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property User|null $user
  * @property Collection|Fileable[] $fileables
  *
@@ -57,4 +58,34 @@ class File extends Model
 	{
 		return $this->hasMany(Fileable::class);
 	}
+
+    /**
+     * Compute full asset URL for GraphQL frontend.
+     */
+    public function getUrlAttribute(): ?string
+    {
+        if (!$this->path) return null;
+
+        // Fallback to 'public' disk if 'local' was saved
+        $disk = $this->disk === 'local' ? 'public' : $this->disk;
+
+        // Storage::url() returns full http://localhost:8000/storage/... URL
+        return Storage::disk($disk)->url($this->path);
+    }
+
+    /**
+     * Retrieve the pivot collection when loaded via morphToMany.
+     */
+    public function getCollectionAttribute(): ?string
+    {
+        return $this->pivot->collection ?? null;
+    }
+
+    /**
+     * Retrieve the pivot sort_order when loaded via morphToMany.
+     */
+    public function getSortOrderAttribute(): ?int
+    {
+        return $this->pivot->sort_order ?? null;
+    }
 }

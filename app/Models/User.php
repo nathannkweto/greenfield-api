@@ -105,4 +105,8 @@ class User extends Authenticatable
 	{
 		return $this->hasMany(Transaction::class, 'cashier_id');
 	}
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'App.Models.User.' . $this->public_id;
+    }
 }

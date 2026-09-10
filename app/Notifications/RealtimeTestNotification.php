@@ -23,7 +23,7 @@ class RealtimeTestNotification extends Notification implements ShouldBroadcastNo
         return [
             'title' => $this->title,
             'body' => $this->body,
-            'action_url' => '/dashboard',
+            'action_url' => '/admin/dashboard',
             'type' => 'test',
         ];
     }
@@ -33,7 +33,7 @@ class RealtimeTestNotification extends Notification implements ShouldBroadcastNo
         return new BroadcastMessage([
             'title' => $this->title,
             'body' => $this->body,
-            'action_url' => '/dashboard',
+            'action_url' => 'admin/dashboard',
             'type' => 'test',
         ]);
     }

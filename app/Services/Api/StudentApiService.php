@@ -8,6 +8,7 @@ use App\Models\File;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -120,6 +121,20 @@ class StudentApiService implements StudentsApiInterface
                     $student->attachFile($file, $collection);
                 }
             }
+
+            // Notify Admin users of the new application
+            NotificationService::sendToRole(
+                role: 'admin',
+                title: 'New Application Received',
+                body: "{$student->first_name} {$student->last_name} submitted application {$student->application_number}.",
+                actionUrl: "/admin/students/{$student->public_id}",
+                type: 'info',
+                extraData: [
+                    'student_public_id' => $student->public_id,
+                    'application_number' => $student->application_number,
+                    'program_public_id' => $program->public_id,
+                ]
+            );
 
             return new ApplicationResponse(
                 status: 'success',
