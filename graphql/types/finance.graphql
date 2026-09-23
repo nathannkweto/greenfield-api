@@ -31,7 +31,7 @@ type StudentFee {
     amountUsd: Float @rename(attribute: "amount_usd")
     student: Student! @belongsTo
     fee: Fee! @belongsTo
-    payments: [FeePayment!]! @hasMany
+    fee_payments: [FeePayment!]! @hasMany
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")
 }
@@ -40,6 +40,8 @@ type StudentFee {
 type Account {
     id: ID!
     accountNumber: String! @rename(attribute: "account_number")
+    name: String!
+    type: String!
     debitTransactions: [Transaction!]! @hasMany(relation: "debitTransactions")
     creditTransactions: [Transaction!]! @hasMany(relation: "creditTransactions")
     createdAt: DateTime! @rename(attribute: "created_at")

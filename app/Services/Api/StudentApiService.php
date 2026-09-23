@@ -2,6 +2,10 @@
 
 namespace App\Services\Api;
 
+use App\Jobs\ProcessBatchAcademicReconciliation;
+use App\Jobs\ProcessBatchFinancialReconciliation;
+use App\Jobs\ProcessBatchStudentRegistration;
+use App\Jobs\ProcessCsvStudentImport;
 use App\Models\Curriculum;
 use App\Models\Enrollment;
 use App\Models\File;
@@ -10,16 +14,28 @@ use App\Models\Student;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use OpenAPI\Server\Api\StudentsApiInterface;
 use OpenAPI\Server\Model\ApplicationRequest;
 use OpenAPI\Server\Model\ApplicationResponse;
 use OpenAPI\Server\Model\ApplicationResponseData;
+use OpenAPI\Server\Model\BatchStudentRegisterRequest;
+use OpenAPI\Server\Model\BatchStudentRegisterResponse;
+use OpenAPI\Server\Model\BatchStudentRegisterResponseData;
 use OpenAPI\Server\Model\DocumentUploadRequest;
 use OpenAPI\Server\Model\ErrorResponse;
+use OpenAPI\Server\Model\ProgramAcademicReconciliationRequest;
+use OpenAPI\Server\Model\ProgramFinancialReconciliationRequest;
+use OpenAPI\Server\Model\ReconciliationBatchResponse;
+use OpenAPI\Server\Model\ReconciliationBatchResponseData;
 use OpenAPI\Server\Model\StandardResponse;
+use OpenAPI\Server\Model\StudentAcademicRecordItem;
+use OpenAPI\Server\Model\StudentCourseGradeItem;
 use OpenAPI\Server\Model\StudentEnrollmentRequest;
+use OpenAPI\Server\Model\StudentFinancialBalanceItem;
+use OpenAPI\Server\Model\StudentRegisterItem;
 use OpenAPI\Server\Model\StudentsPublicIdRejectPostRequest;
 use OpenAPI\Server\Model\ValidationErrorResponse;
 use Throwable;
@@ -146,6 +162,122 @@ class StudentApiService implements StudentsApiInterface
                 )
             );
         });
+    }
+
+    /**
+     * Batch Register Students (Form Table Method)
+     */
+    public function programsPublicIdStudentsBatchPost(
+        string $public_id,
+        BatchStudentRegisterRequest $BatchStudentRegisterRequest
+    ): BatchStudentRegisterResponse|ErrorResponse|ValidationErrorResponse {
+        /** @var Program|null $program */
+        $program = Program::query()
+            ->where('public_id', $public_id)
+            ->first();
+
+        if (!$program) {
+            return new ErrorResponse(
+                message: 'Selected program not found.',
+                error: 'NOT_FOUND'
+            );
+        }
+
+        $students = $BatchStudentRegisterRequest->students ?? [];
+        if (!is_array($students)) {
+            $students = [];
+        }
+
+        // Convert hydrated StudentRegisterItem objects or raw payload arrays into uniform arrays
+        $studentsData = array_map(function (StudentRegisterItem|array $item) {
+            $isObj = $item instanceof StudentRegisterItem;
+
+            $get = function (string $key) use ($item, $isObj) {
+                if ($isObj) {
+                    return $item->{$key} ?? null;
+                }
+                return $item[$key] ?? null;
+            };
+
+            $dob = $get('dob');
+            $dobFormatted = match (true) {
+                $dob instanceof \DateTimeInterface => $dob->format('Y-m-d'),
+                is_string($dob) => $dob,
+                default => null,
+            };
+
+            return [
+                'first_name' => $get('first_name'),
+                'middle_names' => $get('middle_names'),
+                'last_name' => $get('last_name'),
+                'email' => $get('email'),
+                'phone' => $get('phone'),
+                'sex' => $this->resolveValue($get('sex')),
+                'marital_status' => $this->resolveValue($get('marital_status')),
+                'nationality' => $get('nationality') ?? 'Zambian',
+                'nrc_number' => $get('nrc_number'),
+                'passport_number' => $get('passport_number'),
+                'intake' => $this->resolveValue($get('intake')),
+                'study_mode' => $this->resolveValue($get('study_mode')),
+                'address' => $get('address'),
+                'emergency_contact' => $get('emergency_contact'),
+                'dob' => $dobFormatted,
+                'application_number' => $get('application_number'),
+                'admission_number' => $get('admission_number'),
+                'student_number' => $get('student_number'),
+            ];
+        }, $students);
+
+        // Dispatch background processing job
+        ProcessBatchStudentRegistration::dispatch($program->id, $studentsData);
+
+        return new BatchStudentRegisterResponse(
+            status: 'success',
+            message: 'Batch student registration queued for background processing.',
+            data: new BatchStudentRegisterResponseData(
+                total_processed: count($studentsData),
+                successful_count: 0,
+                failed_count: 0,
+                errors: []
+            )
+        );
+    }
+
+    /**
+     * Import Registered Students via CSV File
+     */
+    public function programsPublicIdStudentsImportCsvPost(
+        string $public_id,
+        UploadedFile $file
+    ): BatchStudentRegisterResponse|ErrorResponse|ValidationErrorResponse {
+        /** @var Program|null $program */
+        $program = Program::query()
+            ->where('public_id', $public_id)
+            ->first();
+
+        if (!$program) {
+            return new ErrorResponse(
+                message: 'Selected program not found.',
+                error: 'NOT_FOUND'
+            );
+        }
+
+        // Save CSV temporarily for queue worker
+        $storedPath = $file->store('student_imports');
+
+        // Dispatch background processing job
+        ProcessCsvStudentImport::dispatch($program->id, $storedPath);
+
+        return new BatchStudentRegisterResponse(
+            status: 'success',
+            message: 'CSV student import queued for background processing.',
+            data: new BatchStudentRegisterResponseData(
+                total_processed: 0,
+                successful_count: 0,
+                failed_count: 0,
+                errors: []
+            )
+        );
     }
 
     /**
@@ -413,12 +545,233 @@ class StudentApiService implements StudentsApiInterface
     /**
      * Helper to extract scalar value from backed enum or string.
      */
-    private function resolveValue(mixed $value): string
+    private function resolveValue(mixed $value): ?string
     {
+        if ($value === null) {
+            return null;
+        }
+
         if ($value instanceof \BackedEnum) {
             return (string) $value->value;
         }
 
         return (string) $value;
+    }
+
+    /**
+     * Batch Reconcile Student Financial Balances
+     */
+    public function programsPublicIdFinancialReconciliationPost(
+        string $public_id,
+        ProgramFinancialReconciliationRequest $ProgramFinancialReconciliationRequest
+    ): ReconciliationBatchResponse|ErrorResponse|ValidationErrorResponse {
+        /** @var Program|null $program */
+        $program = Program::query()
+            ->where('public_id', $public_id)
+            ->first();
+
+        if (!$program) {
+            return new ErrorResponse(
+                message: 'Selected program not found.',
+                error: 'NOT_FOUND'
+            );
+        }
+
+        $cohortKey = match (true) {
+            method_exists($ProgramFinancialReconciliationRequest, 'getCohortKey') => $ProgramFinancialReconciliationRequest->getCohortKey(),
+            isset($ProgramFinancialReconciliationRequest->cohort_key) => $ProgramFinancialReconciliationRequest->cohort_key,
+            isset($ProgramFinancialReconciliationRequest->cohortKey) => $ProgramFinancialReconciliationRequest->cohortKey,
+            default => '',
+        };
+
+        $balances = match (true) {
+            method_exists($ProgramFinancialReconciliationRequest, 'getBalances') => $ProgramFinancialReconciliationRequest->getBalances(),
+            isset($ProgramFinancialReconciliationRequest->balances) => $ProgramFinancialReconciliationRequest->balances,
+            default => [],
+        };
+
+        if (!is_array($balances)) {
+            $balances = [];
+        }
+
+        $balancesData = array_map(function (mixed $item): array {
+            $studentId = match (true) {
+                is_object($item) && method_exists($item, 'getStudentId') => $item->getStudentId(),
+                is_object($item) && isset($item->student_id) => $item->student_id,
+                is_object($item) && isset($item->studentId) => $item->studentId,
+                is_array($item) => $item['student_id'] ?? $item['studentId'] ?? '',
+                default => '',
+            };
+
+            $feeBalance = match (true) {
+                is_object($item) && method_exists($item, 'getFeeBalance') => $item->getFeeBalance(),
+                is_object($item) && isset($item->fee_balance) => $item->fee_balance,
+                is_object($item) && isset($item->feeBalance) => $item->feeBalance,
+                is_array($item) => $item['fee_balance'] ?? $item['feeBalance'] ?? 0.0,
+                default => 0.0,
+            };
+
+            return [
+                'student_id' => (string) $studentId,
+                'fee_balance' => (float) $feeBalance,
+            ];
+        }, $balances);
+
+        // Queue worker job
+        ProcessBatchFinancialReconciliation::dispatch(
+            $program->id,
+            (string) $cohortKey,
+            $balancesData
+        );
+
+        return new ReconciliationBatchResponse(
+            status: 'success',
+            message: 'Financial reconciliation batch queued for background processing.',
+            data: new ReconciliationBatchResponseData(
+                total_processed: count($balancesData),
+                successful_count: 0,
+                failed_count: 0,
+                errors: []
+            )
+        );
+    }
+
+    /**
+     * Batch Reconcile Student Academic Marks and Progress
+     */
+    public function programsPublicIdAcademicReconciliationPost(
+        string $public_id,
+        ProgramAcademicReconciliationRequest $ProgramAcademicReconciliationRequest
+    ): ReconciliationBatchResponse|ErrorResponse|ValidationErrorResponse {
+        /** @var Program|null $program */
+        $program = Program::query()
+            ->where('public_id', $public_id)
+            ->first();
+
+        if (!$program) {
+            return new ErrorResponse(
+                message: 'Selected program not found.',
+                error: 'NOT_FOUND'
+            );
+        }
+
+        $cohortKey = match (true) {
+            method_exists($ProgramAcademicReconciliationRequest, 'getCohortKey') => $ProgramAcademicReconciliationRequest->getCohortKey(),
+            isset($ProgramAcademicReconciliationRequest->cohort_key) => $ProgramAcademicReconciliationRequest->cohort_key,
+            isset($ProgramAcademicReconciliationRequest->cohortKey) => $ProgramAcademicReconciliationRequest->cohortKey,
+            default => '',
+        };
+
+        $records = match (true) {
+            method_exists($ProgramAcademicReconciliationRequest, 'getAcademicRecords') => $ProgramAcademicReconciliationRequest->getAcademicRecords(),
+            isset($ProgramAcademicReconciliationRequest->academic_records) => $ProgramAcademicReconciliationRequest->academic_records,
+            isset($ProgramAcademicReconciliationRequest->academicRecords) => $ProgramAcademicReconciliationRequest->academicRecords,
+            default => [],
+        };
+
+        if (!is_array($records)) {
+            $records = [];
+        }
+
+        $recordsData = array_map(function (mixed $item): array {
+            $studentId = match (true) {
+                is_object($item) && method_exists($item, 'getStudentId') => $item->getStudentId(),
+                is_object($item) && isset($item->student_id) => $item->student_id,
+                is_object($item) && isset($item->studentId) => $item->studentId,
+                is_array($item) => $item['student_id'] ?? $item['studentId'] ?? '',
+                default => '',
+            };
+
+            $rawGrades = match (true) {
+                is_object($item) && method_exists($item, 'getGrades') => $item->getGrades(),
+                is_object($item) && isset($item->grades) => $item->grades,
+                is_array($item) => $item['grades'] ?? [],
+                default => [],
+            };
+
+            if (!is_array($rawGrades)) {
+                $rawGrades = [];
+            }
+
+            $gradesData = array_map(function (mixed $grade): array {
+                $courseId = match (true) {
+                    is_object($grade) && method_exists($grade, 'getCourseId') => $grade->getCourseId(),
+                    is_object($grade) && isset($grade->course_id) => $grade->course_id,
+                    is_object($grade) && isset($grade->courseId) => $grade->courseId,
+                    is_array($grade) => $grade['course_id'] ?? $grade['courseId'] ?? '',
+                    default => '',
+                };
+
+                $year = match (true) {
+                    is_object($grade) && method_exists($grade, 'getYear') => $grade->getYear(),
+                    is_object($grade) && isset($grade->year) => $grade->year,
+                    is_array($grade) => $grade['year'] ?? 1,
+                    default => 1,
+                };
+
+                $maxMark = match (true) {
+                    is_object($grade) && method_exists($grade, 'getMaxMark') => $grade->getMaxMark(),
+                    is_object($grade) && isset($grade->max_mark) => $grade->max_mark,
+                    is_object($grade) && isset($grade->maxMark) => $grade->maxMark,
+                    is_array($grade) => $grade['max_mark'] ?? $grade['maxMark'] ?? 100.0,
+                    default => 100.0,
+                };
+
+                $courseCode = match (true) {
+                    is_object($grade) && method_exists($grade, 'getCourseCode') => $grade->getCourseCode(),
+                    is_object($grade) && isset($grade->course_code) => $grade->course_code,
+                    is_object($grade) && isset($grade->courseCode) => $grade->courseCode,
+                    is_array($grade) => $grade['course_code'] ?? $grade['courseCode'] ?? null,
+                    default => null,
+                };
+
+                $courseTitle = match (true) {
+                    is_object($grade) && method_exists($grade, 'getCourseTitle') => $grade->getCourseTitle(),
+                    is_object($grade) && isset($grade->course_title) => $grade->course_title,
+                    is_object($grade) && isset($grade->courseTitle) => $grade->courseTitle,
+                    is_array($grade) => $grade['course_title'] ?? $grade['courseTitle'] ?? null,
+                    default => null,
+                };
+
+                $mark = match (true) {
+                    is_object($grade) && method_exists($grade, 'getMark') => $grade->getMark(),
+                    is_object($grade) && isset($grade->mark) => $grade->mark,
+                    is_array($grade) => $grade['mark'] ?? null,
+                    default => null,
+                };
+
+                return [
+                    'course_id' => (string) $courseId,
+                    'year' => (int) $year,
+                    'max_mark' => (float) $maxMark,
+                    'course_code' => $courseCode !== null ? (string) $courseCode : null,
+                    'course_title' => $courseTitle !== null ? (string) $courseTitle : null,
+                    'mark' => $mark !== null ? (float) $mark : null,
+                ];
+            }, $rawGrades);
+
+            return [
+                'student_id' => (string) $studentId,
+                'grades' => $gradesData,
+            ];
+        }, $records);
+
+        // Queue worker job
+        ProcessBatchAcademicReconciliation::dispatch(
+            $program->id,
+            (string) $cohortKey,
+            $recordsData
+        );
+
+        return new ReconciliationBatchResponse(
+            status: 'success',
+            message: 'Academic reconciliation batch queued for background processing.',
+            data: new ReconciliationBatchResponseData(
+                total_processed: count($recordsData),
+                successful_count: 0,
+                failed_count: 0,
+                errors: []
+            )
+        );
     }
 }

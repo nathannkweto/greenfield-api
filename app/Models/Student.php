@@ -136,4 +136,8 @@ class Student extends Model
     {
         return $this->hasMany(StudentFee::class);
     }
+    public function academicProgress(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(AcademicProgress::class);
+    }
 }

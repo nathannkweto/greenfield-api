@@ -1,0 +1,9 @@
+type AcademicProgress {
+    id: ID!
+    student: Student! @belongsTo
+    current_year: Int!
+    credits_earned: Int!
+    cgpa: Float!
+    created_at: String!
+    updated_at: String!
+}

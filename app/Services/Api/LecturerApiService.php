@@ -2,6 +2,7 @@
 
 namespace App\Services\Api;
 
+use App\Mail\WelcomeLecturerMail;
 use App\Models\CourseOffering;
 use App\Models\Lecturer;
 use App\Models\School;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use OpenAPI\Server\Api\LecturersApiInterface;
 use OpenAPI\Server\Model\LecturerRequest;
@@ -31,7 +33,7 @@ class LecturerApiService implements LecturersApiInterface
             throw new ModelNotFoundException('School record not found.');
         }
 
-        DB::transaction(function () use ($school, $LecturerRequest) {
+        [$lecturer, $randomPassword] = DB::transaction(function () use ($school, $LecturerRequest) {
             $randomPassword = Str::random(8);
 
             $user = User::query()->create([
@@ -41,7 +43,7 @@ class LecturerApiService implements LecturersApiInterface
                 'password' => Hash::make($randomPassword),
             ]);
 
-            Lecturer::query()->create([
+            $lecturer = Lecturer::query()->create([
                 'public_id' => Str::uuid()->toString(),
                 'user_id' => $user->id,
                 'school_id' => $school->id,
@@ -52,7 +54,12 @@ class LecturerApiService implements LecturersApiInterface
                 'address' => $LecturerRequest->address,
                 'emergency_contact' => $LecturerRequest->emergency_contact,
             ]);
+
+            return [$lecturer, $randomPassword];
         });
+
+        // Dispatch queued email notification
+        Mail::to($LecturerRequest->email)->send(new WelcomeLecturerMail($lecturer, $randomPassword));
 
         return new NoContent201();
     }

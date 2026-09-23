@@ -52,9 +52,14 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
         Route::POST('/v1/programs/{public_id}/edit', [ProgramsController::class, 'programsPublicIdEditPost'])->name('programs.programs.public.id.edit.post');
         Route::POST('/v1/programs/{public_id}/curriculum', [\OpenAPI\Server\Http\Controllers\ProgramsController::class, 'programsPublicIdCurriculumPost'])->name('programs.programs.public.id.curriculum.post');
         Route::POST('/v1/programs/{public_id}/requirements', [\OpenAPI\Server\Http\Controllers\ProgramsController::class, 'programsPublicIdRequirementsPost'])->name('programs.programs.public.id.requirements.post');
+        Route::POST('/v1/programs/{public_id}/students/batch', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdStudentsBatchPost'])->name('programs.programs.public.id.students.batch.post');
+        Route::POST('/v1/programs/{public_id}/students/import-csv', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdStudentsImportCsvPost'])->name('programs.programs.public.id.students.import.csv.post');
+        Route::POST('/v1/programs/{public_id}/academic-reconciliation', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdAcademicReconciliationPost'])->name('students.programs.public.id.academic.reconciliation.post');
+        Route::POST('/v1/programs/{public_id}/financial-reconciliation', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdFinancialReconciliationPost'])->name('students.programs.public.id.financial.reconciliation.post');
 
 
-     // Course Catalog (Creation and root editing)
+
+         // Course Catalog (Creation and root editing)
         Route::POST('/v1/courses/create', [CoursesController::class, 'coursesCreatePost'])->name('courses.courses.create.post');
         Route::POST('/v1/courses/{public_id}/edit', [CoursesController::class, 'coursesPublicIdEditPost'])->name('courses.courses.public.id.edit.post');
 

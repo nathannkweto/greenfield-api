@@ -86,6 +86,226 @@ class StudentsController extends Controller
         return response()->abort(500);
     }
     /**
+     * Operation programsPublicIdAcademicReconciliationPost
+     *
+     * Batch Reconcile Student Academic Marks and Progress.
+     *
+     */
+    public function programsPublicIdAcademicReconciliationPost(Request $request, string $public_id): JsonResponse
+    {
+        $validator = Validator::make(
+            array_merge(
+                [
+                    'public_id' => $public_id,
+                ],
+                $request->all(),
+            ),
+            [
+            ],
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid input'], 400);
+        }
+
+
+        $ProgramAcademicReconciliationRequest = $this->serde->deserialize($request->getContent(), from: 'json', to: \OpenAPI\Server\Model\ProgramAcademicReconciliationRequest::class);
+
+
+        $apiResult = $this->api->programsPublicIdAcademicReconciliationPost($public_id, $ProgramAcademicReconciliationRequest);
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ReconciliationBatchResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 200);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 401);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 403);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 404);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ValidationErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 422);
+        }
+
+
+        // This shouldn't happen
+        return response()->abort(500);
+    }
+    /**
+     * Operation programsPublicIdFinancialReconciliationPost
+     *
+     * Batch Reconcile Student Financial Balances.
+     *
+     */
+    public function programsPublicIdFinancialReconciliationPost(Request $request, string $public_id): JsonResponse
+    {
+        $validator = Validator::make(
+            array_merge(
+                [
+                    'public_id' => $public_id,
+                ],
+                $request->all(),
+            ),
+            [
+            ],
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid input'], 400);
+        }
+
+
+        $ProgramFinancialReconciliationRequest = $this->serde->deserialize($request->getContent(), from: 'json', to: \OpenAPI\Server\Model\ProgramFinancialReconciliationRequest::class);
+
+
+        $apiResult = $this->api->programsPublicIdFinancialReconciliationPost($public_id, $ProgramFinancialReconciliationRequest);
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ReconciliationBatchResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 200);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 401);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 403);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 404);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ValidationErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 422);
+        }
+
+
+        // This shouldn't happen
+        return response()->abort(500);
+    }
+    /**
+     * Operation programsPublicIdStudentsBatchPost
+     *
+     * Batch Register Students (Form Table Method).
+     *
+     */
+    public function programsPublicIdStudentsBatchPost(Request $request, string $public_id): JsonResponse
+    {
+        $validator = Validator::make(
+            array_merge(
+                [
+                    'public_id' => $public_id,
+                ],
+                $request->all(),
+            ),
+            [
+            ],
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid input'], 400);
+        }
+
+
+        $BatchStudentRegisterRequest = $this->serde->deserialize($request->getContent(), from: 'json', to: \OpenAPI\Server\Model\BatchStudentRegisterRequest::class);
+
+
+        $apiResult = $this->api->programsPublicIdStudentsBatchPost($public_id, $BatchStudentRegisterRequest);
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\BatchStudentRegisterResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 201);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 401);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 403);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 404);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ValidationErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 422);
+        }
+
+
+        // This shouldn't happen
+        return response()->abort(500);
+    }
+    /**
+     * Operation programsPublicIdStudentsImportCsvPost
+     *
+     * Import Registered Students via CSV File.
+     *
+     */
+    public function programsPublicIdStudentsImportCsvPost(Request $request, string $public_id): JsonResponse
+    {
+        $validator = Validator::make(
+            array_merge(
+                [
+                    'public_id' => $public_id,
+                ],
+                $request->all(),
+            ),
+            [
+                'public_id' => [
+                    'required',
+                    'string',
+                ],
+                'file' => [
+                    'file',
+                    'required',
+                ],
+            ],
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid input'], 400);
+        }
+
+
+        $file = $request->file('file');
+
+
+        $apiResult = $this->api->programsPublicIdStudentsImportCsvPost($public_id, $file);
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\BatchStudentRegisterResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 201);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 401);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 403);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 404);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ValidationErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 422);
+        }
+
+
+        // This shouldn't happen
+        return response()->abort(500);
+    }
+    /**
      * Operation studentsPublicIdAdmitPost
      *
      * Admit Applicant.

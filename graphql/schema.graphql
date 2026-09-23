@@ -82,6 +82,19 @@ type Query {
     @find
     @can(ability: "view")
 
+    "List academic progress records"
+    academicProgresses: [AcademicProgress!]!
+    @paginate(type: CONNECTION)
+    @can(ability: "viewAny", model: "App\\Models\\AcademicProgress")
+
+    "Find academic progress record by student ID or record ID"
+    academicProgress(
+        id: ID @eq
+        studentId: ID @eq(key: "student_id")
+    ): AcademicProgress
+    @find
+    @can(ability: "view")
+
     "List lecturers"
     lecturers: [Lecturer!]!
     @paginate(type: CONNECTION)

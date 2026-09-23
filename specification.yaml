@@ -475,6 +475,126 @@ paths:
         '200':
           description: Curriculum configuration saved.
 
+  /programs/{public_id}/students/batch:
+    post:
+      tags:
+        - Students
+      summary: Batch Register Students (Form Table Method)
+      description: Allows administrators to register multiple students directly into a program from the program details UI form table. Automatically generates user accounts, student profiles, and initial academic progress records.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchStudentRegisterRequest'
+      responses:
+        '201':
+          description: Batch student registration processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStudentRegisterResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /programs/{public_id}/students/import-csv:
+    post:
+      tags:
+        - Students
+      summary: Import Registered Students via CSV File
+      description: Uploads a CSV spreadsheet containing registered student details and academic progress data to bulk register students into the program.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentCsvImportRequest'
+      responses:
+        '201':
+          description: CSV student import processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchStudentRegisterResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /programs/{public_id}/financial-reconciliation:
+    post:
+      tags:
+        - Students
+      summary: Batch Reconcile Student Financial Balances
+      description: Batch updates student fee balances for a specific cohort group within an academic program.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramFinancialReconciliationRequest'
+      responses:
+        '200':
+          description: Financial reconciliation batch processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationBatchResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /programs/{public_id}/academic-reconciliation:
+    post:
+      tags:
+        - Students
+      summary: Batch Reconcile Student Academic Marks and Progress
+      description: Batch records course marks and academic performance data for a student cohort within a program.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramAcademicReconciliationRequest'
+      responses:
+        '200':
+          description: Academic reconciliation batch processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconciliationBatchResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
   /courses/create:
     post:
       tags:
@@ -1246,6 +1366,203 @@ components:
           nullable: true
           example: "Detailed overview covering core subjects, electives, and graduation requirements."
 
+    BatchStudentRegisterRequest:
+      type: object
+      required:
+        - students
+      properties:
+        students:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/StudentRegisterItem'
+
+    StudentRegisterItem:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - phone
+        - sex
+        - marital_status
+        - intake
+        - study_mode
+        - application_date
+      properties:
+        # Personal Details
+        first_name:
+          type: string
+          example: "John"
+        middle_names:
+          type: string
+          nullable: true
+          example: "Chileshe"
+        last_name:
+          type: string
+          example: "Banda"
+        email:
+          type: string
+          format: email
+          example: "john.banda@example.com"
+        phone:
+          type: string
+          example: "+260977123456"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: "2001-03-15"
+        address:
+          type: string
+          nullable: true
+          example: "Plot 12, Great East Rd, Lusaka"
+        emergency_contact:
+          type: string
+          nullable: true
+          example: "Mary Banda (+260977654321)"
+
+        # Demographics
+        sex:
+          type: string
+          enum:
+            - male
+            - female
+          example: "male"
+        marital_status:
+          type: string
+          enum:
+            - single
+            - married
+            - widow
+            - divorced
+          example: "single"
+        nationality:
+          type: string
+          default: "Zambian"
+          example: "Zambian"
+        nrc_number:
+          type: string
+          nullable: true
+          example: "123456/11/1"
+        passport_number:
+          type: string
+          nullable: true
+          example: "Z1234567"
+
+        # Academic Profile
+        application_number:
+          type: string
+          nullable: true
+          description: "Optional custom application number. Auto-generated if omitted."
+          example: "APP-2026-001"
+        admission_number:
+          type: string
+          nullable: true
+          example: "ADM-2026-001"
+        student_number:
+          type: string
+          nullable: true
+          example: "20260001"
+        intake:
+          type: string
+          enum:
+            - January
+            - May
+            - September
+          example: "January"
+        study_mode:
+          type: string
+          enum:
+            - full_time
+            - part_time
+            - distance_learning
+            - online
+          example: "full_time"
+        status:
+          type: string
+          enum:
+            - Registered
+            - Admitted
+            - Draft
+            - Pending
+          default: "Registered"
+          example: "Registered"
+        application_date:
+          type: string
+          format: date
+          example: "2026-01-10"
+        admission_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-01-15"
+
+        # Academic Progress
+        current_year:
+          type: integer
+          minimum: 1
+          default: 1
+          example: 1
+        credits_earned:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 15
+        cgpa:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 4.0
+          default: 0.0
+          example: 3.50
+
+    StudentCsvImportRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: "CSV spreadsheet containing student rows. Expected columns: first_name, middle_names, last_name, email, phone, dob, address, emergency_contact, sex, marital_status, nationality, nrc_number, passport_number, application_number, admission_number, student_number, intake, study_mode, status, application_date, admission_date, current_year, credits_earned, cgpa."
+
+    BatchStudentRegisterResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Batch student registration completed successfully."
+        data:
+          type: object
+          properties:
+            total_processed:
+              type: integer
+              example: 10
+            successful_count:
+              type: integer
+              example: 10
+            failed_count:
+              type: integer
+              example: 0
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  row:
+                    type: integer
+                    example: 3
+                  email:
+                    type: string
+                    example: "invalid.email@example.com"
+                  message:
+                    type: string
+                    example: "The email address has already been taken."
+
     RequirementRequest:
       type: object
       required:
@@ -1473,15 +1790,12 @@ components:
         - department
         - position
       properties:
-        # Existing User reference
         user_public_id:
           type: string
           format: uuid
           nullable: true
           description: Optional. Links to an existing user. If omitted, a new user account will be created.
           example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
-
-        # User Account Fields (Used when user_public_id is omitted)
         email:
           type: string
           format: email
@@ -1492,8 +1806,6 @@ components:
           type: string
           nullable: true
           example: "+260971234567"
-
-        # Admin Profile Fields
         first_name:
           type: string
           example: "Alice"
@@ -1567,3 +1879,134 @@ components:
             type: string
             format: uuid
           example: [ "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b" ]
+
+    ProgramFinancialReconciliationRequest:
+      type: object
+      required:
+        - cohort_key
+        - balances
+      properties:
+        cohort_key:
+          type: string
+          description: "Cohort identifier key (e.g., '2026 January')."
+          example: "2026 January"
+        balances:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/StudentFinancialBalanceItem'
+
+    StudentFinancialBalanceItem:
+      type: object
+      required:
+        - student_id
+        - fee_balance
+      properties:
+        student_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        fee_balance:
+          type: number
+          format: float
+          description: "Outstanding fee balance in local currency (ZMW)."
+          example: 2500.00
+
+    ProgramAcademicReconciliationRequest:
+      type: object
+      required:
+        - cohort_key
+        - academic_records
+      properties:
+        cohort_key:
+          type: string
+          description: "Cohort identifier key (e.g., '2026 January')."
+          example: "2026 January"
+        academic_records:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/StudentAcademicRecordItem'
+
+    StudentAcademicRecordItem:
+      type: object
+      required:
+        - student_id
+        - grades
+      properties:
+        student_id:
+          type: string
+          format: uuid
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        grades:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentCourseGradeItem'
+
+    StudentCourseGradeItem:
+      type: object
+      required:
+        - courseId
+        - year
+      properties:
+        courseId:
+          type: string
+          format: uuid
+          example: "b4c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0c"
+        courseCode:
+          type: string
+          nullable: true
+          example: "CS101"
+        courseTitle:
+          type: string
+          nullable: true
+          example: "Introduction to Computer Science"
+        year:
+          type: integer
+          minimum: 1
+          example: 1
+        mark:
+          type: number
+          format: float
+          nullable: true
+          description: "Mark attained. Empty/null string in UI translates to unrecorded mark."
+          example: 85.0
+        maxMark:
+          type: number
+          format: float
+          default: 100.0
+          example: 100.0
+
+    ReconciliationBatchResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Batch reconciliation processed successfully."
+        data:
+          type: object
+          properties:
+            total_processed:
+              type: integer
+              example: 15
+            successful_count:
+              type: integer
+              example: 15
+            failed_count:
+              type: integer
+              example: 0
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  student_id:
+                    type: string
+                    format: uuid
+                    example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+                  message:
+                    type: string
+                    example: "Student ID does not belong to this program cohort."

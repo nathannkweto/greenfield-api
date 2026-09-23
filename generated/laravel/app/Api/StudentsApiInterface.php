@@ -41,6 +41,78 @@ interface StudentsApiInterface {
 
 
     /**
+     * Operation programsPublicIdAcademicReconciliationPost
+     *
+     * Batch Reconcile Student Academic Marks and Progress
+     * @param string $public_id
+     * @param \OpenAPI\Server\Model\ProgramAcademicReconciliationRequest $ProgramAcademicReconciliationRequest
+     * @return \OpenAPI\Server\Model\ReconciliationBatchResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ValidationErrorResponse
+     */
+    public function programsPublicIdAcademicReconciliationPost(
+            string $public_id,
+            \OpenAPI\Server\Model\ProgramAcademicReconciliationRequest $ProgramAcademicReconciliationRequest,
+    ):
+        \OpenAPI\Server\Model\ReconciliationBatchResponse |
+        \OpenAPI\Server\Model\ErrorResponse |
+        \OpenAPI\Server\Model\ValidationErrorResponse
+    ;
+
+
+    /**
+     * Operation programsPublicIdFinancialReconciliationPost
+     *
+     * Batch Reconcile Student Financial Balances
+     * @param string $public_id
+     * @param \OpenAPI\Server\Model\ProgramFinancialReconciliationRequest $ProgramFinancialReconciliationRequest
+     * @return \OpenAPI\Server\Model\ReconciliationBatchResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ValidationErrorResponse
+     */
+    public function programsPublicIdFinancialReconciliationPost(
+            string $public_id,
+            \OpenAPI\Server\Model\ProgramFinancialReconciliationRequest $ProgramFinancialReconciliationRequest,
+    ):
+        \OpenAPI\Server\Model\ReconciliationBatchResponse |
+        \OpenAPI\Server\Model\ErrorResponse |
+        \OpenAPI\Server\Model\ValidationErrorResponse
+    ;
+
+
+    /**
+     * Operation programsPublicIdStudentsBatchPost
+     *
+     * Batch Register Students (Form Table Method)
+     * @param string $public_id
+     * @param \OpenAPI\Server\Model\BatchStudentRegisterRequest $BatchStudentRegisterRequest
+     * @return \OpenAPI\Server\Model\BatchStudentRegisterResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ValidationErrorResponse
+     */
+    public function programsPublicIdStudentsBatchPost(
+            string $public_id,
+            \OpenAPI\Server\Model\BatchStudentRegisterRequest $BatchStudentRegisterRequest,
+    ):
+        \OpenAPI\Server\Model\BatchStudentRegisterResponse |
+        \OpenAPI\Server\Model\ErrorResponse |
+        \OpenAPI\Server\Model\ValidationErrorResponse
+    ;
+
+
+    /**
+     * Operation programsPublicIdStudentsImportCsvPost
+     *
+     * Import Registered Students via CSV File
+     * @param string $public_id
+     * @param \Illuminate\Http\UploadedFile $file
+     * @return \OpenAPI\Server\Model\BatchStudentRegisterResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ValidationErrorResponse
+     */
+    public function programsPublicIdStudentsImportCsvPost(
+            string $public_id,
+            \Illuminate\Http\UploadedFile $file,
+    ):
+        \OpenAPI\Server\Model\BatchStudentRegisterResponse |
+        \OpenAPI\Server\Model\ErrorResponse |
+        \OpenAPI\Server\Model\ValidationErrorResponse
+    ;
+
+
+    /**
      * Operation studentsPublicIdAdmitPost
      *
      * Admit Applicant

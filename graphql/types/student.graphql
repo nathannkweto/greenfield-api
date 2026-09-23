@@ -30,6 +30,8 @@ type Student {
     cgpa: Float!
     creditsCompleted: Int! @rename(attribute: "credits_completed")
 
+    academicProgress: AcademicProgress @hasOne(relation: "academicProgress")
+
     user: User! @belongsTo
     program: Program! @belongsTo
     enrollments: [Enrollment!]! @hasMany

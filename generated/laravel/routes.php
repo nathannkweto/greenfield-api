@@ -231,6 +231,34 @@ Route::POST('/api/v1/schools/{public_id}/edit', [\OpenAPI\Server\Http\Controller
 Route::POST('/api/v1/apply', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'applyPost'])->name('students.apply.post');
 
 /**
+ * POST programsPublicIdAcademicReconciliationPost
+ * Summary: Batch Reconcile Student Academic Marks and Progress
+ * Notes: Batch records course marks and academic performance data for a student cohort within a program.
+ */
+Route::POST('/api/v1/programs/{public_id}/academic-reconciliation', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdAcademicReconciliationPost'])->name('students.programs.public.id.academic.reconciliation.post');
+
+/**
+ * POST programsPublicIdFinancialReconciliationPost
+ * Summary: Batch Reconcile Student Financial Balances
+ * Notes: Batch updates student fee balances for a specific cohort group within an academic program.
+ */
+Route::POST('/api/v1/programs/{public_id}/financial-reconciliation', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdFinancialReconciliationPost'])->name('students.programs.public.id.financial.reconciliation.post');
+
+/**
+ * POST programsPublicIdStudentsBatchPost
+ * Summary: Batch Register Students (Form Table Method)
+ * Notes: Allows administrators to register multiple students directly into a program from the program details UI form table. Automatically generates user accounts, student profiles, and initial academic progress records.
+ */
+Route::POST('/api/v1/programs/{public_id}/students/batch', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdStudentsBatchPost'])->name('students.programs.public.id.students.batch.post');
+
+/**
+ * POST programsPublicIdStudentsImportCsvPost
+ * Summary: Import Registered Students via CSV File
+ * Notes: Uploads a CSV spreadsheet containing registered student details and academic progress data to bulk register students into the program.
+ */
+Route::POST('/api/v1/programs/{public_id}/students/import-csv', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'programsPublicIdStudentsImportCsvPost'])->name('students.programs.public.id.students.import.csv.post');
+
+/**
  * POST studentsPublicIdAdmitPost
  * Summary: Admit Applicant
  * Notes: Approves student admission status and generates student number.
