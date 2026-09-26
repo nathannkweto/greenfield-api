@@ -868,6 +868,282 @@ paths:
         '200':
           description: Assessment results published successfully.
 
+  /fees/create:
+    post:
+      tags:
+        - Finance
+      summary: Create Master Fee Template
+      description: Creates a fee definition. Supports global fees (no scope), program-scoped fees, or student-scoped fees. Must link to a valid GL account ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeeRequest'
+      responses:
+        '201':
+          description: Fee template created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /fees/{id}/edit:
+    post:
+      tags:
+        - Finance
+      summary: Edit Fee Template
+      description: Updates an existing fee template definition by integer primary key.
+      parameters:
+        - $ref: '#/components/parameters/IntegerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeeRequest'
+      responses:
+        '200':
+          description: Fee template updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /fees/{id}/assign-bulk:
+    post:
+      tags:
+        - Finance
+      summary: Bulk Assign Fee to Filtered Students
+      description: Bills a fee template to a dynamic student population using flexible filtering rules (program, intake, admission year, status, academic progress, or explicit student lists).
+      parameters:
+        - $ref: '#/components/parameters/IntegerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkFeeAssignmentRequest'
+      responses:
+        '202':
+          description: Bulk fee billing job queued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /fees/{fee_id}/assign-students:
+    post:
+      tags:
+        - Finance
+      summary: Assign Fee to Multiple Students Directly
+      description: Assigns a fee (by integer ID) directly to multiple students using their public UUIDs.
+      parameters:
+        - name: fee_id
+          in: path
+          required: true
+          description: Database integer ID of the fee being assigned.
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectStudentFeeAssignmentRequest'
+      responses:
+        '200':
+          description: Fee assigned to selected students successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /fees/{fee_id}/attach-programs:
+    post:
+      tags:
+        - Finance
+      summary: Attach Fee to One or Multiple Programs
+      description: Associates a fee (by integer ID) with an array of program public UUIDs.
+      parameters:
+        - name: fee_id
+          in: path
+          required: true
+          description: Database integer ID of the fee.
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachFeeToProgramRequest'
+      responses:
+        '200':
+          description: Fee attached to programs successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /students/{public_id}/fees/assign:
+    post:
+      tags:
+        - Finance
+      summary: Assign Fee Directly to an Individual Student
+      description: Bills a specific master fee or custom purchase fee directly to an individual student.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentFeeAssignmentRequest'
+      responses:
+        '201':
+          description: Fee charged to student account successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /fees/{id}/attach-program:
+    post:
+      tags:
+        - Finance
+      summary: Attach a Universal Fee to a Program
+      description: Links an unassigned fee template to a specific academic program by populating its polymorphic feeable relation.
+      parameters:
+        - $ref: '#/components/parameters/IntegerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachFeeToProgramRequest'
+      responses:
+        '200':
+          description: Fee successfully attached to the program.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /academic-years/create:
+    post:
+      tags:
+        - Terms
+      summary: Create Academic Year
+      description: Creates a new academic year calendar period.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearRequest'
+      responses:
+        '201':
+          description: Academic year created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /academic-years/{id}/terms/create:
+    post:
+      tags:
+        - Terms
+      summary: Create Academic Term
+      description: Adds a new academic term session within a specific academic year.
+      parameters:
+        - $ref: '#/components/parameters/IntegerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicTermRequest'
+      responses:
+        '201':
+          description: Academic term created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicTermResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /academic-years/{id}/events/create:
+    post:
+      tags:
+        - Terms
+      summary: Create Academic Event
+      description: Adds a single or multi-day calendar event linked to an academic year.
+      parameters:
+        - $ref: '#/components/parameters/IntegerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicEventRequest'
+      responses:
+        '201':
+          description: Academic event created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicEventResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
 components:
   parameters:
     PublicId:
@@ -878,6 +1154,13 @@ components:
       schema:
         type: string
         format: uuid
+    IntegerId:
+      name: id
+      in: path
+      required: true
+      description: Primary auto-increment integer identifier.
+      schema:
+        type: integer
 
   securitySchemes:
     CookieAuth:
@@ -1390,7 +1673,6 @@ components:
         - study_mode
         - application_date
       properties:
-        # Personal Details
         first_name:
           type: string
           example: "John"
@@ -1421,8 +1703,6 @@ components:
           type: string
           nullable: true
           example: "Mary Banda (+260977654321)"
-
-        # Demographics
         sex:
           type: string
           enum:
@@ -1449,8 +1729,6 @@ components:
           type: string
           nullable: true
           example: "Z1234567"
-
-        # Academic Profile
         application_number:
           type: string
           nullable: true
@@ -1497,8 +1775,6 @@ components:
           format: date
           nullable: true
           example: "2026-01-15"
-
-        # Academic Progress
         current_year:
           type: integer
           minimum: 1
@@ -1525,7 +1801,7 @@ components:
         file:
           type: string
           format: binary
-          description: "CSV spreadsheet containing student rows. Expected columns: first_name, middle_names, last_name, email, phone, dob, address, emergency_contact, sex, marital_status, nationality, nrc_number, passport_number, application_number, admission_number, student_number, intake, study_mode, status, application_date, admission_date, current_year, credits_earned, cgpa."
+          description: "CSV spreadsheet containing student rows."
 
     BatchStudentRegisterResponse:
       type: object
@@ -1596,7 +1872,7 @@ components:
           type: integer
           minimum: 1
           example: 1
-          description: "Academic year level for the course within the program (e.g., 1, 2, 3, 4)."
+          description: "Academic year level for the course within the program."
 
     CourseRequest:
       type: object
@@ -1683,7 +1959,6 @@ components:
           maximum: 3
           nullable: true
           example: 1
-          description: "Academic term number (e.g., 1, 2, or 3)."
         weight_percentage:
           type: number
           format: float
@@ -1709,11 +1984,9 @@ components:
         assessment_public_id:
           type: string
           format: uuid
-          description: "Required if not passed in the URL route parameter."
           example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
         items:
           type: array
-          description: "List of student grades to insert or update."
           items:
             type: object
             required:
@@ -1728,13 +2001,10 @@ components:
                 type: number
                 format: float
                 nullable: true
-                minimum: 0
-                description: "Numeric mark attained. Null indicates missed/exempted."
                 example: 85.5
               remarks:
                 type: string
                 nullable: true
-                description: "Optional lecturer notes/feedback per student."
                 example: "Excellent essay structure."
 
     LecturerRequest:
@@ -1794,13 +2064,11 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: Optional. Links to an existing user. If omitted, a new user account will be created.
           example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
         email:
           type: string
           format: email
           nullable: true
-          description: Required if user_public_id is omitted.
           example: "alice.tembo@university.edu"
         phone:
           type: string
@@ -1863,7 +2131,6 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: "Public UUID of targeted School or Program. Null for College level."
           example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
         target_name:
           type: string
@@ -1874,7 +2141,6 @@ components:
         attachment_file_public_ids:
           type: array
           nullable: true
-          description: "List of uploaded file UUIDs to link via the fileables pivot table."
           items:
             type: string
             format: uuid
@@ -1888,7 +2154,6 @@ components:
       properties:
         cohort_key:
           type: string
-          description: "Cohort identifier key (e.g., '2026 January')."
           example: "2026 January"
         balances:
           type: array
@@ -1909,7 +2174,6 @@ components:
         fee_balance:
           type: number
           format: float
-          description: "Outstanding fee balance in local currency (ZMW)."
           example: 2500.00
 
     ProgramAcademicReconciliationRequest:
@@ -1920,7 +2184,6 @@ components:
       properties:
         cohort_key:
           type: string
-          description: "Cohort identifier key (e.g., '2026 January')."
           example: "2026 January"
         academic_records:
           type: array
@@ -1969,7 +2232,6 @@ components:
           type: number
           format: float
           nullable: true
-          description: "Mark attained. Empty/null string in UI translates to unrecorded mark."
           example: 85.0
         maxMark:
           type: number
@@ -2010,3 +2272,391 @@ components:
                   message:
                     type: string
                     example: "Student ID does not belong to this program cohort."
+
+    FeeRequest:
+      type: object
+      required:
+        - title
+        - amount_zmw
+        - frequency
+        - account_id
+      properties:
+        title:
+          type: string
+          example: "Tuition Fee - B.Sc. Computer Science"
+        amount_zmw:
+          type: number
+          format: float
+          minimum: 0
+          example: 7500.00
+        amount_usd:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          example: 300.00
+        frequency:
+          type: string
+          enum:
+            - monthly
+            - termly
+            - yearly
+            - one_time
+          example: "termly"
+        account_id:
+          type: integer
+          description: "Database ID of the Chart of Accounts GL revenue account."
+          example: 1
+        program_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "When supplied, backend auto-sets feeable_type='Program' and feeable_public_id to this value."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        feeable_type:
+          type: string
+          nullable: true
+          enum:
+            - Program
+            - Student
+          description: "Polymorphic model type. Set to 'Program' when scoped to a program, or null for Global fees."
+          example: "Program"
+        feeable_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Public UUID of the attached Program or Student."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+
+    FeeData:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Tuition Fee - B.Sc. Computer Science"
+        amount_zmw:
+          type: number
+          format: float
+          example: 7500.00
+        amount_usd:
+          type: number
+          format: float
+          nullable: true
+          example: 300.00
+        frequency:
+          type: string
+          example: "termly"
+        account:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            account_number:
+              type: string
+              example: "4010"
+            name:
+              type: string
+              example: "Tuition Fee Revenue"
+            type:
+              type: string
+              example: "revenue"
+        feeable_type:
+          type: string
+          nullable: true
+          example: "Program"
+        feeable_id:
+          type: integer
+          nullable: true
+          example: 12
+
+    FeeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Fee template saved successfully."
+        data:
+          $ref: '#/components/schemas/FeeData'
+
+    BulkFeeAssignmentRequest:
+      type: object
+      properties:
+        student_numbers:
+          type: array
+          items:
+            type: string
+          description: "Optional explicit student numbers. If provided, filter conditions are bypassed."
+          example: [ "20260001", "20260002" ]
+        program_public_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Target program UUID. Omit or null for All Programs."
+          example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+        intake:
+          type: string
+          nullable: true
+          enum: [ January, May, September ]
+          description: "Omit or null for All Intakes."
+        registration_year:
+          type: integer
+          nullable: true
+          description: "Admission year. Omit or null for All Years."
+        study_mode:
+          type: string
+          nullable: true
+          enum: [ full_time, part_time, distance, online ]
+          description: "Omit or null for All Study Modes."
+        status:
+          type: string
+          nullable: true
+          enum: [ Registered, Admitted, Pending ]
+          description: "Omit or null for All Statuses."
+
+    StudentFeeAssignmentRequest:
+      type: object
+      required:
+        - fee_id
+      properties:
+        fee_id:
+          type: integer
+          description: "Database ID of the Fee template to bill to the student."
+          example: 1
+        override_amount_zmw:
+          type: number
+          format: float
+          nullable: true
+          example: 500.00
+        override_amount_usd:
+          type: number
+          format: float
+          nullable: true
+          example: 20.00
+
+    DirectStudentFeeAssignmentRequest:
+      type: object
+      required:
+        - student_public_ids
+      properties:
+        student_public_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Array of student public UUIDs."
+          example:
+            - "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+            - "c7a2e8f0-1b3d-4c5a-8f9e-0d1e2f3a4b5c"
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-10-30"
+        override_amount_zmw:
+          type: number
+          format: float
+          nullable: true
+          example: 5000.00
+
+    AttachFeeToProgramRequest:
+      type: object
+      required:
+        - program_public_ids
+      properties:
+        program_public_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Array of program public UUIDs to attach to the fee."
+          example:
+            - "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+            - "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+
+    AcademicYearRequest:
+      type: object
+      required:
+        - year
+        - start_date
+        - end_date
+      properties:
+        year:
+          type: integer
+          example: 2027
+          description: "4-digit calendar year."
+        start_date:
+          type: string
+          format: date
+          example: "2027-01-05"
+        end_date:
+          type: string
+          format: date
+          example: "2027-12-20"
+
+    AcademicYearResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Academic year created successfully."
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            year:
+              type: integer
+              example: 2027
+            start_date:
+              type: string
+              format: date
+              example: "2027-01-05"
+            end_date:
+              type: string
+              format: date
+              example: "2027-12-20"
+            created_at:
+              type: string
+              format: date-time
+              example: "2027-01-01T08:00:00Z"
+            updated_at:
+              type: string
+              format: date-time
+              example: "2027-01-01T08:00:00Z"
+
+    AcademicTermRequest:
+      type: object
+      required:
+        - term
+        - start_date
+        - end_date
+      properties:
+        academic_year_id:
+          type: integer
+          nullable: true
+          description: "Parent academic year integer ID (optional if specified in URL path parameter)."
+          example: 1
+        term:
+          type: string
+          enum:
+            - January
+            - May
+            - September
+            - Semester 1
+            - Semester 2
+          example: "September"
+        start_date:
+          type: string
+          format: date
+          example: "2027-09-01"
+        end_date:
+          type: string
+          format: date
+          example: "2027-12-15"
+
+    AcademicTermResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Academic term created successfully."
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            academic_year_id:
+              type: integer
+              example: 1
+            term:
+              type: string
+              example: "September"
+            start_date:
+              type: string
+              format: date
+              example: "2027-09-01"
+            end_date:
+              type: string
+              format: date
+              example: "2027-12-15"
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    AcademicEventRequest:
+      type: object
+      required:
+        - title
+        - start_date
+        - end_date
+      properties:
+        academic_year_id:
+          type: integer
+          nullable: true
+          description: "Parent academic year integer ID (optional if specified in URL path parameter)."
+          example: 1
+        title:
+          type: string
+          example: "Late Registration Deadline"
+        start_date:
+          type: string
+          format: date
+          example: "2027-09-10"
+        end_date:
+          type: string
+          format: date
+          example: "2027-09-10"
+
+    AcademicEventResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Academic event created successfully."
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            academic_year_id:
+              type: integer
+              example: 1
+            title:
+              type: string
+              example: "Late Registration Deadline"
+            start_date:
+              type: string
+              format: date
+              example: "2027-09-10"
+            end_date:
+              type: string
+              format: date
+              example: "2027-09-10"
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time

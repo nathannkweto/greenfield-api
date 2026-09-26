@@ -37,7 +37,7 @@ class StudentFinancialBalanceItem
     * 
     * @param string $student_id
     *
-    * Outstanding fee balance in local currency (ZMW).
+    * 
     * @param float $fee_balance
     */
 

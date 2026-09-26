@@ -34,7 +34,7 @@ class ProgramAcademicReconciliationRequest
 {
     /**
     *
-    * Cohort identifier key (e.g., &#39;2026 January&#39;).
+    * 
     * @param string $cohort_key
     *
     * 

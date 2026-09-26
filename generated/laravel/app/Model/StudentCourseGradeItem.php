@@ -46,7 +46,7 @@ class StudentCourseGradeItem
     * 
     * @param int $year
     *
-    * Mark attained. Empty/null string in UI translates to unrecorded mark.
+    * 
     * @param null | float $mark
     *
     * 

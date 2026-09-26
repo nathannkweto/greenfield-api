@@ -43,7 +43,7 @@ class CurriculumRequest
     * 
     * @param null | string $lecturer_public_id
     *
-    * Academic year level for the course within the program (e.g., 1, 2, 3, 4).
+    * Academic year level for the course within the program.
     * @param int $year
     */
 

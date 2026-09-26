@@ -12,6 +12,7 @@ use App\Services\Api\CurriculaApiService;
 use App\Services\Api\FileApiService;
 use App\Services\Api\NotificationsApiService;
 use App\Services\Api\PublicApiService;
+use App\Services\Api\TermApiService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -42,6 +43,7 @@ use App\Services\Api\ProgramApiService;
 use App\Services\Api\ResultApiService;
 use App\Services\Api\SchoolApiService;
 use App\Services\Api\StudentApiService;
+use OpenAPI\Server\Api\TermsApiInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -66,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SchoolsApiInterface::class, SchoolApiService::class);
         $this->app->bind(StudentsApiInterface::class, StudentApiService::class);
         $this->app->bind(FilesApiInterface::class, FileApiService::class);
+        $this->app->bind(TermsApiInterface::class, TermApiService::class);
     }
 
     /**

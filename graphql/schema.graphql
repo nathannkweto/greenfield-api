@@ -56,6 +56,34 @@ type Query {
     announcement(id: ID! @eq(key: "public_id")): Announcement @find
 
     # =========================================================================
+    # CALENDAR & ACADEMIC SESSIONS
+    # =========================================================================
+
+    "List all academic years with optional year filter"
+    academicYears(
+        year: Int @eq
+    ): [AcademicYear!]! @all @orderBy(column: "year", direction: DESC)
+
+    "Find a specific academic year by ID"
+    academicYear(id: ID! @eq): AcademicYear @find
+
+    "List academic terms"
+    academicTerms(
+        academicYearId: ID @eq(key: "academic_year_id")
+    ): [AcademicTerm!]! @all
+
+    "Find a specific academic term by ID"
+    academicTerm(id: ID! @eq): AcademicTerm @find
+
+    "List academic events"
+    academicEvents(
+        academicYearId: ID @eq(key: "academic_year_id")
+    ): [AcademicEvent!]! @all
+
+    "Find a specific academic event by ID"
+    academicEvent(id: ID! @eq): AcademicEvent @find
+
+    # =========================================================================
     # PROTECTED READ QUERIES (Authorized via Laravel Policies)
     # =========================================================================
 
@@ -77,8 +105,11 @@ type Query {
     @paginate(type: CONNECTION)
     @can(ability: "viewAny", model: "App\\Models\\Student")
 
-    "Find a specific student profile"
-    student(id: ID! @eq(key: "public_id")): Student
+    "Find a specific student profile by public ID or student number"
+    student(
+        id: ID @eq(key: "public_id")
+        studentNumber: String @eq(key: "student_number")
+    ): Student
     @find
     @can(ability: "view")
 
@@ -161,7 +192,7 @@ type Query {
     @can(ability: "view")
 
     "List financial accounts"
-    accounts: [Account!]!
+    accounts(type: String @eq): [Account!]!
     @paginate(type: CONNECTION)
     @can(ability: "viewAny", model: "App\\Models\\Account")
 

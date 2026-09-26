@@ -43,7 +43,7 @@ class AssessmentRequest
     * 
     * @param \OpenAPI\Server\Model\AssessmentRequestType $type
     *
-    * Academic term number (e.g., 1, 2, or 3).
+    * 
     * @param null | int $term
     *
     * 

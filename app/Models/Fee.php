@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -43,6 +44,7 @@ class Fee extends Model
 		'amount_zmw',
 		'amount_usd',
 		'frequency',
+        'account_id',
 		'feeable_type',
 		'feeable_id'
 	];
@@ -57,5 +59,10 @@ class Fee extends Model
     public function feeable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 }

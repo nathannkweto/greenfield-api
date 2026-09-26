@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class StudentFee
- * 
+ *
  * @property int $id
  * @property int $student_id
  * @property int $fee_id
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property float|null $amount_usd
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property Fee $fee
  * @property Student $student
  * @property Collection|FeePayment[] $fee_payments
@@ -59,4 +59,9 @@ class StudentFee extends Model
 	{
 		return $this->hasMany(FeePayment::class);
 	}
+
+    public function getAccountAttribute(): ?Account
+    {
+        return $this->fee?->account;
+    }
 }

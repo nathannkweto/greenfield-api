@@ -37,10 +37,10 @@ class GradeRequestItemsInner
     * 
     * @param string $student_public_id
     *
-    * Numeric mark attained. Null indicates missed/exempted.
+    * 
     * @param null | float $score
     *
-    * Optional lecturer notes/feedback per student.
+    * 
     * @param null | string $remarks
     */
 

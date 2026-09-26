@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Fee;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentFee;
@@ -36,22 +35,9 @@ class ProcessBatchFinancialReconciliation implements ShouldQueue
             return;
         }
 
-        // Get or create cohort reconciliation fee template for the program
-        $fee = Fee::firstOrCreate(
-            [
-                'title' => "Reconciliation Fee - {$this->cohortKey}",
-                'feeable_type' => Program::class,
-                'feeable_id' => $program->id,
-            ],
-            [
-                'amount_zmw' => 0.00,
-                'frequency' => 'one_time',
-            ]
-        );
-
         foreach ($this->balances as $item) {
             try {
-                DB::transaction(function () use ($item, $fee) {
+                DB::transaction(function () use ($item) {
                     $student = Student::query()
                         ->where('public_id', $item['student_id'])
                         ->orWhere('id', $item['student_id'])
@@ -65,7 +51,7 @@ class ProcessBatchFinancialReconciliation implements ShouldQueue
                     StudentFee::updateOrCreate(
                         [
                             'student_id' => $student->id,
-                            'fee_id' => $fee->id,
+                            'fee_id' => null,
                         ],
                         [
                             'amount_zmw' => $item['fee_balance'],

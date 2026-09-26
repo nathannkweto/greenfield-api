@@ -19,6 +19,7 @@ type Fee {
     amountZmw: Float! @rename(attribute: "amount_zmw")
     amountUsd: Float @rename(attribute: "amount_usd")
     frequency: FeeFrequency!
+    account: Account @belongsTo
     feeable: Feeable @morphTo
     createdAt: DateTime! @rename(attribute: "created_at")
     updatedAt: DateTime! @rename(attribute: "updated_at")

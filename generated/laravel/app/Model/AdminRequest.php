@@ -34,10 +34,10 @@ class AdminRequest
 {
     /**
     *
-    * Optional. Links to an existing user. If omitted, a new user account will be created.
+    * 
     * @param null | string $user_public_id
     *
-    * Required if user_public_id is omitted.
+    * 
     * @param null | string $email
     *
     * 

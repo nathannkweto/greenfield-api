@@ -8,6 +8,9 @@ Schedule::command('queue:work --stop-when-empty')
     ->everyMinute()
     ->withoutOverlapping();
 
+Schedule::command('calendar:process-term-start')
+    ->dailyAt('00:05');
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

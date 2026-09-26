@@ -1,0 +1,32 @@
+type AcademicYear {
+    id: ID!
+    year: Int!
+    startDate: String! @rename(attribute: "start_date")
+    endDate: String! @rename(attribute: "end_date")
+    academic_terms: [AcademicTerm!]! @hasMany
+    academic_events: [AcademicEvent!]! @hasMany
+    createdAt: String! @rename(attribute: "created_at")
+    updatedAt: String! @rename(attribute: "updated_at")
+}
+
+type AcademicTerm {
+    id: ID!
+    academicYearId: ID! @rename(attribute: "academic_year_id")
+    academicYear: AcademicYear! @belongsTo(relation: "academicYear")
+    term: String!
+    startDate: String! @rename(attribute: "start_date")
+    endDate: String! @rename(attribute: "end_date")
+    createdAt: String! @rename(attribute: "created_at")
+    updatedAt: String! @rename(attribute: "updated_at")
+}
+
+type AcademicEvent {
+    id: ID!
+    academicYearId: ID! @rename(attribute: "academic_year_id")
+    academicYear: AcademicYear! @belongsTo(relation: "academicYear")
+    title: String!
+    startDate: String! @rename(attribute: "start_date")
+    endDate: String! @rename(attribute: "end_date")
+    createdAt: String! @rename(attribute: "created_at")
+    updatedAt: String! @rename(attribute: "updated_at")
+}

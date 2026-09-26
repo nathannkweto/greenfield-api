@@ -34,10 +34,10 @@ class GradeRequest
 {
     /**
     *
-    * Required if not passed in the URL route parameter.
+    * 
     * @param string $assessment_public_id
     *
-    * List of student grades to insert or update.
+    * 
     * @param \OpenAPI\Server\Model\GradeRequestItemsInner[] $items
     */
 

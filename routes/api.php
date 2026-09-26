@@ -74,15 +74,31 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
         Route::POST('/v1/students/{public_id}/reject', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdRejectPost'])->name('students.students.public.id.reject.post');
 
         // Finance
+         Route::POST('/v1/fees/create', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesCreatePost'])->name('finance.fees.create.post');
+         Route::POST('/v1/fees/{public_id}/edit', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesPublicIdEditPost'])->name('finance.fees.public.id.edit.post');
+         Route::POST('/v1/students/{public_id}/fees/assign', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'studentsPublicIdFeesAssignPost'])->name('finance.students.public.id.fees.assign.post');
+         Route::POST('/v1/fees/create', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesCreatePost'])->name('finance.fees.create.post');
+         Route::POST('/v1/fees/{fee_id}/assign-students', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesFeeIdAssignStudentsPost'])->name('finance.fees.fee.id.assign.students.post');
+         Route::POST('/v1/fees/{fee_id}/attach-programs', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesFeeIdAttachProgramsPost'])->name('finance.fees.fee.id.attach.programs.post');
+         Route::POST('/v1/fees/{id}/assign-bulk', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdAssignBulkPost'])->name('finance.fees.id.assign.bulk.post');
+         Route::POST('/v1/fees/{id}/attach-program', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdAttachProgramPost'])->name('finance.fees.id.attach.program.post');
+         Route::POST('/v1/fees/{id}/edit', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdEditPost'])->name('finance.fees.id.edit.post');
+         Route::POST('/v1/students/{public_id}/fees/assign', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'studentsPublicIdFeesAssignPost'])->name('finance.students.public.id.fees.assign.post');
+
 //        Route::POST('/api/v1/finance/fee/create', [FinanceController::class, 'financeFeeCreatePost'])->name('finance.finance.fee.create.post');
 //        Route::POST('/api/v1/finance/fee/{public_id}/edit', [FinanceController::class, 'financeFeePublicIdEditPost'])->name('finance.finance.fee.public.id.edit.post');
 //        Route::POST('/api/v1/finance/transaction/create', [FinanceController::class, 'financeTransactionCreatePost'])->name('finance.finance.transaction.create.post');
 //        Route::POST('/api/v1/finance/transaction/{public_id}/reverse', [FinanceController::class, 'financeTransactionPublicIdReversePost'])->name('finance.finance.transaction.public.id.reverse.post');
 
-        // Announcements
-        Route::POST('/v1/announcements/create', [AnnouncementsController::class, 'announcementsCreatePost'])->name('announcements.announcements.create.post');
-        Route::POST('/v1/announcements/{public_id}/edit', [AnnouncementsController::class, 'announcementsPublicIdEditPost'])->name('announcements.announcements.public.id.edit.post');
-    });
+         // Announcements
+         Route::POST('/v1/announcements/create', [AnnouncementsController::class, 'announcementsCreatePost'])->name('announcements.announcements.create.post');
+         Route::POST('/v1/announcements/{public_id}/edit', [AnnouncementsController::class, 'announcementsPublicIdEditPost'])->name('announcements.announcements.public.id.edit.post');
+
+         Route::POST('/v1/academic-years/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsCreatePost'])->name('terms.academic.years.create.post');
+         Route::POST('/v1/academic-years/{id}/events/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsIdEventsCreatePost'])->name('terms.academic.years.id.events.create.post');
+         Route::POST('/v1/academic-years/{id}/terms/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsIdTermsCreatePost'])->name('terms.academic.years.id.terms.create.post');
+
+     });
 
     /*
     |--------------------------------------------------------------------------

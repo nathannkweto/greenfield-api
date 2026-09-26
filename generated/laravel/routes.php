@@ -154,6 +154,55 @@ Route::POST('/api/v1/deans/{public_id}/edit', [\OpenAPI\Server\Http\Controllers\
 Route::POST('/api/v1/files/upload', [\OpenAPI\Server\Http\Controllers\FilesController::class, 'filesUploadPost'])->name('files.files.upload.post');
 
 /**
+ * POST feesCreatePost
+ * Summary: Create Master Fee Template
+ * Notes: Creates a fee definition. Supports global fees (no scope), program-scoped fees, or student-scoped fees. Must link to a valid GL account ID.
+ */
+Route::POST('/api/v1/fees/create', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesCreatePost'])->name('finance.fees.create.post');
+
+/**
+ * POST feesFeeIdAssignStudentsPost
+ * Summary: Assign Fee to Multiple Students Directly
+ * Notes: Assigns a fee (by integer ID) directly to multiple students using their public UUIDs.
+ */
+Route::POST('/api/v1/fees/{fee_id}/assign-students', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesFeeIdAssignStudentsPost'])->name('finance.fees.fee.id.assign.students.post');
+
+/**
+ * POST feesFeeIdAttachProgramsPost
+ * Summary: Attach Fee to One or Multiple Programs
+ * Notes: Associates a fee (by integer ID) with an array of program public UUIDs.
+ */
+Route::POST('/api/v1/fees/{fee_id}/attach-programs', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesFeeIdAttachProgramsPost'])->name('finance.fees.fee.id.attach.programs.post');
+
+/**
+ * POST feesIdAssignBulkPost
+ * Summary: Bulk Assign Fee to Filtered Students
+ * Notes: Bills a fee template to a dynamic student population using flexible filtering rules (program, intake, admission year, status, academic progress, or explicit student lists).
+ */
+Route::POST('/api/v1/fees/{id}/assign-bulk', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdAssignBulkPost'])->name('finance.fees.id.assign.bulk.post');
+
+/**
+ * POST feesIdAttachProgramPost
+ * Summary: Attach a Universal Fee to a Program
+ * Notes: Links an unassigned fee template to a specific academic program by populating its polymorphic feeable relation.
+ */
+Route::POST('/api/v1/fees/{id}/attach-program', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdAttachProgramPost'])->name('finance.fees.id.attach.program.post');
+
+/**
+ * POST feesIdEditPost
+ * Summary: Edit Fee Template
+ * Notes: Updates an existing fee template definition by integer primary key.
+ */
+Route::POST('/api/v1/fees/{id}/edit', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesIdEditPost'])->name('finance.fees.id.edit.post');
+
+/**
+ * POST studentsPublicIdFeesAssignPost
+ * Summary: Assign Fee Directly to an Individual Student
+ * Notes: Bills a specific master fee or custom purchase fee directly to an individual student.
+ */
+Route::POST('/api/v1/students/{public_id}/fees/assign', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'studentsPublicIdFeesAssignPost'])->name('finance.students.public.id.fees.assign.post');
+
+/**
  * POST lecturersCreatePost
  * Summary: Create Lecturer Profile
  * Notes: 
@@ -292,4 +341,25 @@ Route::POST('/api/v1/students/{public_id}/register', [\OpenAPI\Server\Http\Contr
  * Notes: 
  */
 Route::POST('/api/v1/students/{public_id}/reject', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdRejectPost'])->name('students.students.public.id.reject.post');
+
+/**
+ * POST academicYearsCreatePost
+ * Summary: Create Academic Year
+ * Notes: Creates a new academic year calendar period.
+ */
+Route::POST('/api/v1/academic-years/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsCreatePost'])->name('terms.academic.years.create.post');
+
+/**
+ * POST academicYearsIdEventsCreatePost
+ * Summary: Create Academic Event
+ * Notes: Adds a single or multi-day calendar event linked to an academic year.
+ */
+Route::POST('/api/v1/academic-years/{id}/events/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsIdEventsCreatePost'])->name('terms.academic.years.id.events.create.post');
+
+/**
+ * POST academicYearsIdTermsCreatePost
+ * Summary: Create Academic Term
+ * Notes: Adds a new academic term session within a specific academic year.
+ */
+Route::POST('/api/v1/academic-years/{id}/terms/create', [\OpenAPI\Server\Http\Controllers\TermsController::class, 'academicYearsIdTermsCreatePost'])->name('terms.academic.years.id.terms.create.post');
 

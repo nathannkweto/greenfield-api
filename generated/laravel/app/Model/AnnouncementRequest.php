@@ -46,7 +46,7 @@ class AnnouncementRequest
     * 
     * @param \OpenAPI\Server\Model\AnnouncementRequestTargetLevel $target_level
     *
-    * Public UUID of targeted School or Program. Null for College level.
+    * 
     * @param null | string $target_public_id
     *
     * 
@@ -55,7 +55,7 @@ class AnnouncementRequest
     * 
     * @param string $author
     *
-    * List of uploaded file UUIDs to link via the fileables pivot table.
+    * 
     * @param null | string[] $attachment_file_public_ids
     */
 
