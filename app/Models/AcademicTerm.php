@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class AcademicTerm
- * 
+ *
  * @property int $id
  * @property int $academic_year_id
  * @property string $term
@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon $end_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property AcademicYear $academic_year
  *
  * @package App\Models
@@ -41,7 +41,7 @@ class AcademicTerm extends Model
 		'end_date'
 	];
 
-	public function academic_year()
+	public function academicYear()
 	{
 		return $this->belongsTo(AcademicYear::class);
 	}
