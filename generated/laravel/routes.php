@@ -154,6 +154,13 @@ Route::POST('/api/v1/deans/{public_id}/edit', [\OpenAPI\Server\Http\Controllers\
 Route::POST('/api/v1/files/upload', [\OpenAPI\Server\Http\Controllers\FilesController::class, 'filesUploadPost'])->name('files.files.upload.post');
 
 /**
+ * GET studentsPublicIdFilesGet
+ * Summary: Retrieve Student Files and Documents
+ * Notes: Fetches all files attached to a student profile via the polymorphic fileable relation.
+ */
+Route::GET('/api/v1/students/{public_id}/files', [\OpenAPI\Server\Http\Controllers\FilesController::class, 'studentsPublicIdFilesGet'])->name('files.students.public.id.files.get');
+
+/**
  * POST feesCreatePost
  * Summary: Create Master Fee Template
  * Notes: Creates a fee definition. Supports global fees (no scope), program-scoped fees, or student-scoped fees. Must link to a valid GL account ID.
@@ -327,6 +334,13 @@ Route::POST('/api/v1/students/{public_id}/documents', [\OpenAPI\Server\Http\Cont
  * Notes: Assigns student to curriculum course mappings for an academic year.
  */
 Route::POST('/api/v1/students/{public_id}/enroll', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdEnrollPost'])->name('students.students.public.id.enroll.post');
+
+/**
+ * GET studentsPublicIdFilesGet
+ * Summary: Retrieve Student Files and Documents
+ * Notes: Fetches all files attached to a student profile via the polymorphic fileable relation.
+ */
+Route::GET('/api/v1/students/{public_id}/files', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdFilesGet'])->name('students.students.public.id.files.get');
 
 /**
  * POST studentsPublicIdRegisterPost

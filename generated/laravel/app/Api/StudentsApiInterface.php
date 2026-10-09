@@ -163,6 +163,23 @@ interface StudentsApiInterface {
 
 
     /**
+     * Operation studentsPublicIdFilesGet
+     *
+     * Retrieve Student Files and Documents
+     * @param string $public_id
+     * @param null | string $collection
+     * @return \OpenAPI\Server\Model\StudentFilesResponse | \OpenAPI\Server\Model\ErrorResponse | \OpenAPI\Server\Model\ErrorResponse
+     */
+    public function studentsPublicIdFilesGet(
+            string $public_id,
+            ?string $collection,
+    ):
+        \OpenAPI\Server\Model\StudentFilesResponse |
+        \OpenAPI\Server\Model\ErrorResponse
+    ;
+
+
+    /**
      * Operation studentsPublicIdRegisterPost
      *
      * Register Student Profile

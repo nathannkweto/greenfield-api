@@ -61,17 +61,17 @@ class File extends Model
 
     /**
      * Compute full asset URL for GraphQL frontend.
-     */
-    public function getUrlAttribute(): ?string
-    {
-        if (!$this->path) return null;
+
+    * public function getUrlAttribute(): ?string
+    * {
+    *    if (!$this->path) return null;
 
         // Fallback to 'public' disk if 'local' was saved
-        $disk = $this->disk === 'local' ? 'public' : $this->disk;
-
+    *       $disk = $this->disk === 'local' ? 'public' : $this->disk;
         // Storage::url() returns full http://localhost:8000/storage/... URL
-        return Storage::disk($disk)->url($this->path);
-    }
+     *     return Storage::disk($disk)->url($this->path);
+    * }
+   */
 
     /**
      * Retrieve the pivot collection when loaded via morphToMany.
@@ -87,5 +87,15 @@ class File extends Model
     public function getSortOrderAttribute(): ?int
     {
         return $this->pivot->sort_order ?? null;
+    }
+
+    /**
+     * Compute secure download API URL for frontend.
+     */
+    public function getUrlAttribute(): ?string
+    {
+        if (!$this->public_id) return null;
+
+        return "/files/{$this->public_id}/download";
     }
 }

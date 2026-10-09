@@ -34,6 +34,8 @@ use OpenAPI\Server\Model\StandardResponse;
 use OpenAPI\Server\Model\StudentAcademicRecordItem;
 use OpenAPI\Server\Model\StudentCourseGradeItem;
 use OpenAPI\Server\Model\StudentEnrollmentRequest;
+use OpenAPI\Server\Model\StudentFileItem;
+use OpenAPI\Server\Model\StudentFilesResponse;
 use OpenAPI\Server\Model\StudentFinancialBalanceItem;
 use OpenAPI\Server\Model\StudentRegisterItem;
 use OpenAPI\Server\Model\StudentsPublicIdRejectPostRequest;
@@ -772,6 +774,53 @@ class StudentApiService implements StudentsApiInterface
                 failed_count: 0,
                 errors: []
             )
+        );
+    }
+
+    /**
+     * Retrieve Student Files and Documents
+     */
+    public function studentsPublicIdFilesGet(
+        string $public_id,
+        ?string $collection = null
+    ): StudentFilesResponse|ErrorResponse {
+        /** @var Student|null $student */
+        $student = Student::query()
+            ->where('public_id', $public_id)
+            ->first();
+
+        if (!$student) {
+            return new ErrorResponse(
+                message: 'Student record not found.',
+                error: 'NOT_FOUND'
+            );
+        }
+
+        $query = $student->files();
+
+        if (!empty($collection)) {
+            $query->wherePivot('collection', $collection);
+        }
+
+        $files = $query->get();
+
+        $fileItems = $files->map(function (File $file) {
+            return new StudentFileItem(
+                id: $file->public_id,
+                original_name: $file->original_name,
+                mime_type: $file->mime_type,
+                size: (int) $file->size,
+                sort_order: (int) ($file->sort_order ?? 0),
+                created_at: $file->created_at ? new \DateTime($file->created_at->toIso8601String()) : new \DateTime(),
+                url: $file->url,
+                collection: $file->collection
+            );
+        })->all();
+
+        return new StudentFilesResponse(
+            status: 'success',
+            message: 'Student files retrieved successfully.',
+            data: $fileItems
         );
     }
 }

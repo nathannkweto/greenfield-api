@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 use OpenAPI\Server\Http\Controllers\AdminsController;
 use OpenAPI\Server\Http\Controllers\AnnouncementsController;
@@ -20,7 +21,7 @@ use OpenAPI\Server\Http\Controllers\StudentsController;
 */
 
 Route::GET('/v1/sanctum/csrf-cookie', [AuthController::class, 'sanctumCsrfCookieGet'])->name('publicAuth.sanctum.csrf.cookie.get');
-Route::POST('/v1/auth/login', [AuthController::class, 'authLoginPost'])->name('publicAuth.auth.login.post');
+Route::POST('/v1/auth/login', [AuthController::class, 'authLoginPost'])->name('login');;
 Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\ApplicantsController::class, 'applicantsCreatePost'])->name('applicants.applicants.create.post');
 
 /*
@@ -39,6 +40,8 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
     */
      Route::POST('/v1/files/upload', [\OpenAPI\Server\Http\Controllers\FilesController::class, 'filesUploadPost'])->name('files.files.upload.post');
      Route::POST('/v1/apply', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'applyPost'])->name('students.apply.post');
+     Route::get('/v1/files/{public_id}/download', [FileController::class, 'download'])
+         ->name('files.download');
 
      Route::middleware('role:admin')->group(function () {
         // Admins
@@ -72,8 +75,9 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
         Route::POST('/v1/students/{public_id}/register', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdRegisterPost'])->name('students.students.public.id.register.post');
         Route::POST('/v1/students/{public_id}/admit', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdAdmitPost'])->name('students.students.public.id.admit.post');
         Route::POST('/v1/students/{public_id}/reject', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdRejectPost'])->name('students.students.public.id.reject.post');
+         Route::GET('/v1/students/{public_id}/files', [\OpenAPI\Server\Http\Controllers\StudentsController::class, 'studentsPublicIdFilesGet'])->name('students.students.public.id.files.get');
 
-        // Finance
+         // Finance
          Route::POST('/v1/fees/create', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesCreatePost'])->name('finance.fees.create.post');
          Route::POST('/v1/fees/{public_id}/edit', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'feesPublicIdEditPost'])->name('finance.fees.public.id.edit.post');
          Route::POST('/v1/students/{public_id}/fees/assign', [\OpenAPI\Server\Http\Controllers\FinanceController::class, 'studentsPublicIdFeesAssignPost'])->name('finance.students.public.id.fees.assign.post');

@@ -90,4 +90,56 @@ class FilesController extends Controller
         // This shouldn't happen
         return response()->abort(500);
     }
+    /**
+     * Operation studentsPublicIdFilesGet
+     *
+     * Retrieve Student Files and Documents.
+     *
+     */
+    public function studentsPublicIdFilesGet(Request $request, string $public_id): JsonResponse
+    {
+        $validator = Validator::make(
+            array_merge(
+                [
+                    'public_id' => $public_id,
+                ],
+                $request->all(),
+            ),
+            [
+                'public_id' => [
+                    'required',
+                    'string',
+                ],
+                'collection' => [
+                    'string',
+                ],
+            ],
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid input'], 400);
+        }
+
+
+        $collection = $request->string('collection')->value();
+
+
+        $apiResult = $this->api->studentsPublicIdFilesGet($public_id, $collection);
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\StudentFilesResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 200);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 401);
+        }
+
+        if ($apiResult instanceof \OpenAPI\Server\Model\ErrorResponse) {
+            return response()->json($this->serde->serialize($apiResult, format: 'array'), 404);
+        }
+
+
+        // This shouldn't happen
+        return response()->abort(500);
+    }
 }

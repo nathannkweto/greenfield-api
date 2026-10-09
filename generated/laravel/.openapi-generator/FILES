@@ -108,6 +108,8 @@ app/Model/StudentAcademicRecordItem.php
 app/Model/StudentCourseGradeItem.php
 app/Model/StudentEnrollmentRequest.php
 app/Model/StudentFeeAssignmentRequest.php
+app/Model/StudentFileItem.php
+app/Model/StudentFilesResponse.php
 app/Model/StudentFinancialBalanceItem.php
 app/Model/StudentRegisterItem.php
 app/Model/StudentRegisterItemSex.php

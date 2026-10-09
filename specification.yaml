@@ -333,6 +333,34 @@ paths:
         '404':
           $ref: '#/components/responses/404NotFound'
 
+  /students/{public_id}/files:
+    get:
+      tags:
+        - Students
+        - Files
+      summary: Retrieve Student Files and Documents
+      description: Fetches all files attached to a student profile via the polymorphic fileable relation.
+      parameters:
+        - $ref: '#/components/parameters/PublicId'
+        - name: collection
+          in: query
+          required: false
+          description: Optional filter by file collection category (e.g., TRANSCRIPT, NRC, CERTIFICATE).
+          schema:
+            type: string
+            example: "TRANSCRIPT"
+      responses:
+        '200':
+          description: Student files retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentFilesResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
   /schools/create:
     post:
       tags:
@@ -2660,3 +2688,62 @@ components:
             updated_at:
               type: string
               format: date-time
+
+    StudentFileItem:
+      type: object
+      required:
+        - id
+        - original_name
+        - mime_type
+        - size
+        - url
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Maps to file public_id.
+          example: "a3c8e5f1-8d2b-4e1a-9f0c-5b6d7e8f9a0b"
+        original_name:
+          type: string
+          description: Original filename on upload.
+          example: "nrc_scan.pdf"
+        mime_type:
+          type: string
+          example: "application/pdf"
+        size:
+          type: integer
+          description: File size in bytes.
+          example: 1048576
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: Computed public/S3 asset URL.
+          example: "http://localhost:8000/storage/documents/nrc_scan.pdf"
+        collection:
+          type: string
+          nullable: true
+          description: Morph pivot collection tag (e.g., nrc_document, TRANSCRIPT).
+          example: "TRANSCRIPT"
+        sort_order:
+          type: integer
+          example: 0
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-10T14:30:00Z"
+
+    StudentFilesResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        message:
+          type: string
+          example: "Student files retrieved successfully."
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentFileItem'
