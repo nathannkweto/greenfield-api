@@ -32,18 +32,38 @@ class ProcessBatchStudentRegistration implements ShouldQueue
             return;
         }
 
+        // Helper to trim strings and convert whitespace-only or empty values to null
+        $cleanNullable = function (?string $value): ?string {
+            if ($value === null) {
+                return null;
+            }
+            $trimmed = trim($value);
+            return $trimmed === '' ? null : $trimmed;
+        };
+
+        // Helper to trim standard required strings
+        $cleanString = function (?string $value, string $default = ''): string {
+            if ($value === null) {
+                return $default;
+            }
+            $trimmed = trim($value);
+            return $trimmed === '' ? $default : $trimmed;
+        };
+
         foreach ($this->studentsData as $data) {
-            DB::transaction(function () use ($program, $data) {
+            DB::transaction(function () use ($program, $data, $cleanNullable, $cleanString) {
                 $registrationDate = now();
 
+                $email = $cleanString($data['email'] ?? '');
+
                 /** @var User|null $user */
-                $user = User::query()->where('email', $data['email'])->first();
+                $user = User::query()->where('email', $email)->first();
                 $plainPassword = null;
 
                 if (!$user) {
                     $plainPassword = Str::random(10);
                     $user = User::query()->create([
-                        'email' => $data['email'],
+                        'email' => $email,
                         'public_id' => (string) Str::uuid(),
                         'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
                         'password' => bcrypt($plainPassword),
@@ -53,7 +73,7 @@ class ProcessBatchStudentRegistration implements ShouldQueue
                 $yearShort = date('y');
 
                 // Generate application_number if missing
-                $applicationNumber = $data['application_number'] ?? null;
+                $applicationNumber = $cleanNullable($data['application_number'] ?? null);
                 if (empty($applicationNumber)) {
                     $prefix = 'APP' . $yearShort;
                     $sequence = Student::query()
@@ -63,7 +83,7 @@ class ProcessBatchStudentRegistration implements ShouldQueue
                 }
 
                 // Generate admission_number if missing
-                $admissionNumber = $data['admission_number'] ?? null;
+                $admissionNumber = $cleanNullable($data['admission_number'] ?? null);
                 if (empty($admissionNumber)) {
                     $programCode = strtoupper($program->code ?? 'GEN');
                     $prefix = 'AD' . $yearShort . $programCode;
@@ -76,7 +96,7 @@ class ProcessBatchStudentRegistration implements ShouldQueue
                 }
 
                 // Generate student_number if missing
-                $studentNumber = $data['student_number'] ?? null;
+                $studentNumber = $cleanNullable($data['student_number'] ?? null);
                 if (empty($studentNumber)) {
                     $schoolId = $program->school_id ?? 1;
                     $schoolPrefix = sprintf('%s%02d', $yearShort, $schoolId);
@@ -98,19 +118,19 @@ class ProcessBatchStudentRegistration implements ShouldQueue
                     'application_number' => $applicationNumber,
                     'admission_number' => $admissionNumber,
                     'student_number' => $studentNumber,
-                    'first_name' => $data['first_name'] ?? '',
-                    'middle_names' => $data['middle_names'] ?? null,
-                    'last_name' => $data['last_name'] ?? '',
-                    'email' => $data['email'],
-                    'phone' => $data['phone'] ?? '',
+                    'first_name' => $cleanString($data['first_name'] ?? ''),
+                    'middle_names' => $cleanNullable($data['middle_names'] ?? null),
+                    'last_name' => $cleanString($data['last_name'] ?? ''),
+                    'email' => $email,
+                    'phone' => $cleanString($data['phone'] ?? ''),
                     'dob' => $data['dob'] ?? null,
-                    'address' => $data['address'] ?? null,
-                    'emergency_contact' => $data['emergency_contact'] ?? null,
+                    'address' => $cleanNullable($data['address'] ?? null),
+                    'emergency_contact' => $cleanNullable($data['emergency_contact'] ?? null),
                     'sex' => !empty($data['sex']) ? $data['sex'] : 'male',
                     'marital_status' => !empty($data['marital_status']) ? $data['marital_status'] : 'single',
                     'nationality' => !empty($data['nationality']) ? $data['nationality'] : 'Zambian',
-                    'nrc_number' => $data['nrc_number'] ?? null,
-                    'passport_number' => $data['passport_number'] ?? null,
+                    'nrc_number' => $cleanNullable($data['nrc_number'] ?? null),
+                    'passport_number' => $cleanNullable($data['passport_number'] ?? null),
                     'intake' => !empty($data['intake']) ? $data['intake'] : 'January',
                     'study_mode' => !empty($data['study_mode']) ? $data['study_mode'] : 'full_time',
                     'status' => 'registered',
@@ -118,8 +138,10 @@ class ProcessBatchStudentRegistration implements ShouldQueue
                     'admission_date' => $registrationDate,
                 ]);
 
-                // Send Welcome Email
-                Mail::to($student->email)->send(new WelcomeStudentMail($student, $plainPassword));
+                // Send Welcome Email if password was generated
+                if ($plainPassword) {
+                    Mail::to($student->email)->send(new WelcomeStudentMail($student, $plainPassword));
+                }
             });
         }
     }
