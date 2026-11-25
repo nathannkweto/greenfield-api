@@ -9,7 +9,6 @@ use OpenAPI\Server\Http\Controllers\CoursesController;
 use OpenAPI\Server\Http\Controllers\FinanceController;
 use OpenAPI\Server\Http\Controllers\LecturersController;
 use OpenAPI\Server\Http\Controllers\ProgramsController;
-use OpenAPI\Server\Http\Controllers\PublicController;
 use OpenAPI\Server\Http\Controllers\ResultsController;
 use OpenAPI\Server\Http\Controllers\SchoolsController;
 use OpenAPI\Server\Http\Controllers\StudentsController;
@@ -127,9 +126,5 @@ Route::POST('/v1/applicants/create', [\OpenAPI\Server\Http\Controllers\Applicant
     });
 
      Route::POST('/v1/auth/logout', [AuthController::class, 'authLogoutPost'])->name('publicAuth.auth.logout.post');
-     Route::POST('/v1/fcm-token', [\OpenAPI\Server\Http\Controllers\NotificationsController::class, 'fcmTokenPost'])->name('notifications.fcm.token.post');
-
-
-
-
+     Route::POST('/v1/auth/password/change', [AuthController::class, 'authPasswordChangePost'])->name('auth.password.change.post');
  });

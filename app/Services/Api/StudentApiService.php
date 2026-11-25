@@ -2,6 +2,10 @@
 
 namespace App\Services\Api;
 
+use App\Exceptions\DomainValidationException;
+use App\Exceptions\ResourceNotFoundException;
+use App\Exceptions\Student\DuplicateStudentException;
+use App\Exceptions\Student\InvalidStudentStateException;
 use App\Jobs\ProcessBatchAcademicReconciliation;
 use App\Jobs\ProcessBatchFinancialReconciliation;
 use App\Jobs\ProcessBatchStudentRegistration;
@@ -31,12 +35,9 @@ use OpenAPI\Server\Model\ProgramFinancialReconciliationRequest;
 use OpenAPI\Server\Model\ReconciliationBatchResponse;
 use OpenAPI\Server\Model\ReconciliationBatchResponseData;
 use OpenAPI\Server\Model\StandardResponse;
-use OpenAPI\Server\Model\StudentAcademicRecordItem;
-use OpenAPI\Server\Model\StudentCourseGradeItem;
 use OpenAPI\Server\Model\StudentEnrollmentRequest;
 use OpenAPI\Server\Model\StudentFileItem;
 use OpenAPI\Server\Model\StudentFilesResponse;
-use OpenAPI\Server\Model\StudentFinancialBalanceItem;
 use OpenAPI\Server\Model\StudentRegisterItem;
 use OpenAPI\Server\Model\StudentsPublicIdRejectPostRequest;
 use OpenAPI\Server\Model\ValidationErrorResponse;
@@ -52,20 +53,23 @@ class StudentApiService implements StudentsApiInterface
     public function applyPost(
         ApplicationRequest $ApplicationRequest
     ): ApplicationResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Program|null $program */
-        $program = Program::query()
-            ->where('public_id', $ApplicationRequest->program_public_id)
-            ->first();
+        $program = $this->findProgramOrFail($ApplicationRequest->program_public_id);
 
-        if (!$program) {
-            return new ErrorResponse(
-                message: 'Selected program not found.',
-                error: 'NOT_FOUND'
-            );
+        // Guard against duplicate unique student identifiers before opening transaction
+        if (Student::query()->where('email', $ApplicationRequest->email)->exists()) {
+            throw new DuplicateStudentException('email');
+        }
+
+        if (!empty($ApplicationRequest->nrc_number) && Student::query()->where('nrc_number', $ApplicationRequest->nrc_number)->exists()) {
+            throw new DuplicateStudentException('nrc_number');
+        }
+
+        if (!empty($ApplicationRequest->passport_number) && Student::query()->where('passport_number', $ApplicationRequest->passport_number)->exists()) {
+            throw new DuplicateStudentException('passport_number');
         }
 
         return DB::transaction(function () use ($ApplicationRequest, $program) {
-            /** @var User $user */
+            /** @var User|null $user */
             $user = null;
 
             if (!empty($ApplicationRequest->user_public_id)) {
@@ -73,6 +77,10 @@ class StudentApiService implements StudentsApiInterface
                     ->where('public_id', $ApplicationRequest->user_public_id)
                     ->orWhere('id', $ApplicationRequest->user_public_id)
                     ->first();
+
+                if (!$user) {
+                    throw new ResourceNotFoundException('User', (string) $ApplicationRequest->user_public_id);
+                }
             }
 
             if (!$user) {
@@ -80,7 +88,6 @@ class StudentApiService implements StudentsApiInterface
                     ['email' => $ApplicationRequest->email],
                     [
                         'public_id' => (string) Str::uuid(),
-                        'name' => trim($ApplicationRequest->first_name . ' ' . $ApplicationRequest->last_name),
                         'password' => bcrypt(Str::random(16)),
                     ]
                 );
@@ -119,7 +126,7 @@ class StudentApiService implements StudentsApiInterface
                 'application_date' => now(),
             ]);
 
-            // Map all pre-uploaded document collections
+            // Attach pre-uploaded document collections
             $fileCollections = array_filter([
                 'nrc' => $ApplicationRequest->nrc_file_public_id,
                 'passport' => $ApplicationRequest->passport_file_public_id,
@@ -135,12 +142,13 @@ class StudentApiService implements StudentsApiInterface
                     ->orWhere('id', $fileIdentifier)
                     ->first();
 
-                if ($file) {
-                    $student->attachFile($file, $collection);
+                if (!$file) {
+                    throw new ResourceNotFoundException("File ({$collection})", (string) $fileIdentifier);
                 }
+
+                $student->attachFile($file, $collection);
             }
 
-            // Notify Admin users of the new application
             NotificationService::sendToRole(
                 role: 'admin',
                 title: 'New Application Received',
@@ -173,33 +181,19 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         BatchStudentRegisterRequest $BatchStudentRegisterRequest
     ): BatchStudentRegisterResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Program|null $program */
-        $program = Program::query()
-            ->where('public_id', $public_id)
-            ->first();
+        $program = $this->findProgramOrFail($public_id);
 
-        if (!$program) {
-            return new ErrorResponse(
-                message: 'Selected program not found.',
-                error: 'NOT_FOUND'
+        $students = $BatchStudentRegisterRequest->students ?? [];
+        if (!is_array($students) || count($students) === 0) {
+            throw new DomainValidationException(
+                'At least one student record is required for batch registration.',
+                ['students' => ['The students list cannot be empty.']]
             );
         }
 
-        $students = $BatchStudentRegisterRequest->students ?? [];
-        if (!is_array($students)) {
-            $students = [];
-        }
-
-        // Convert hydrated StudentRegisterItem objects or raw payload arrays into uniform arrays
         $studentsData = array_map(function (StudentRegisterItem|array $item) {
             $isObj = $item instanceof StudentRegisterItem;
-
-            $get = function (string $key) use ($item, $isObj) {
-                if ($isObj) {
-                    return $item->{$key} ?? null;
-                }
-                return $item[$key] ?? null;
-            };
+            $get = fn (string $key) => $isObj ? ($item->{$key} ?? null) : ($item[$key] ?? null);
 
             $dob = $get('dob');
             $dobFormatted = match (true) {
@@ -230,7 +224,6 @@ class StudentApiService implements StudentsApiInterface
             ];
         }, $students);
 
-        // Dispatch background processing job
         ProcessBatchStudentRegistration::dispatch($program->id, $studentsData);
 
         return new BatchStudentRegisterResponse(
@@ -252,22 +245,23 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         UploadedFile $file
     ): BatchStudentRegisterResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Program|null $program */
-        $program = Program::query()
-            ->where('public_id', $public_id)
-            ->first();
+        $program = $this->findProgramOrFail($public_id);
 
-        if (!$program) {
-            return new ErrorResponse(
-                message: 'Selected program not found.',
-                error: 'NOT_FOUND'
+        if (!$file->isValid()) {
+            throw new DomainValidationException(
+                'The uploaded CSV file is invalid or corrupted.',
+                ['file' => [$file->getErrorMessage()]]
             );
         }
 
-        // Save CSV temporarily for queue worker
         $storedPath = $file->store('student_imports');
+        if ($storedPath === false) {
+            throw new DomainValidationException(
+                'Failed to store the uploaded CSV file for processing.',
+                ['file' => ['Unable to save uploaded file.']]
+            );
+        }
 
-        // Dispatch background processing job
         ProcessCsvStudentImport::dispatch($program->id, $storedPath);
 
         return new BatchStudentRegisterResponse(
@@ -290,17 +284,10 @@ class StudentApiService implements StudentsApiInterface
     public function studentsPublicIdAdmitPost(
         string $public_id
     ): StandardResponse|ErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()
-            ->with('program')
-            ->where('public_id', $public_id)
-            ->first();
+        $student = $this->findStudentOrFail($public_id, ['program']);
 
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
-            );
+        if ($student->status !== 'Pending') {
+            throw new InvalidStudentStateException('admit', (string) $student->status, 'Pending');
         }
 
         return DB::transaction(function () use ($student) {
@@ -317,7 +304,7 @@ class StudentApiService implements StudentsApiInterface
             $admissionNumber = sprintf('%s%03d', $prefix, $sequence);
 
             $student->update([
-                'status' => 'admitted',
+                'status' => 'Admitted',
                 'admission_number' => $admissionNumber,
                 'admission_date' => now(),
             ]);
@@ -349,15 +336,7 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         DocumentUploadRequest $DocumentUploadRequest
     ): StandardResponse|ErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()->where('public_id', $public_id)->first();
-
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
-            );
-        }
+        $student = $this->findStudentOrFail($public_id);
 
         /** @var File|null $file */
         $file = File::query()
@@ -366,10 +345,7 @@ class StudentApiService implements StudentsApiInterface
             ->first();
 
         if (!$file) {
-            return new ErrorResponse(
-                message: 'Referenced file not found.',
-                error: 'NOT_FOUND'
-            );
+            throw new ResourceNotFoundException('File', (string) $DocumentUploadRequest->file_public_id);
         }
 
         $student->attachFile($file, $DocumentUploadRequest->collection);
@@ -398,31 +374,62 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         StudentEnrollmentRequest $StudentEnrollmentRequest
     ): StandardResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()->where('public_id', $public_id)->first();
+        $student = $this->findStudentOrFail($public_id);
 
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
+        if ($student->status !== 'Registered') {
+            throw new InvalidStudentStateException('enroll', (string) $student->status, 'Registered');
+        }
+
+        $requestedIds = array_values(array_unique($StudentEnrollmentRequest->course_offering_public_ids ?? []));
+        if (count($requestedIds) === 0) {
+            throw new DomainValidationException(
+                'At least one course offering is required for enrollment.',
+                ['course_offering_public_ids' => ['Must contain at least one curriculum public_id.']]
             );
         }
 
-        return DB::transaction(function () use ($student, $StudentEnrollmentRequest) {
-            $curricula = Curriculum::query()
-                ->whereIn('public_id', $StudentEnrollmentRequest->course_offering_public_ids)
-                ->get();
+        $curricula = Curriculum::query()
+            ->whereIn('public_id', $requestedIds)
+            ->get();
 
+        // Check for non-existent curriculum IDs
+        $foundIds = $curricula->pluck('public_id')->all();
+        $missingIds = array_values(array_diff($requestedIds, $foundIds));
+        if (count($missingIds) > 0) {
+            throw new DomainValidationException(
+                'One or more requested course offerings were not found.',
+                ['course_offering_public_ids' => ['Invalid IDs: ' . implode(', ', $missingIds)]]
+            );
+        }
+
+        // Ensure all curricula belong to the student's program
+        $mismatchedIds = $curricula
+            ->filter(fn (Curriculum $c) => $c->program_id !== $student->program_id)
+            ->pluck('public_id')
+            ->values()
+            ->all();
+
+        if (count($mismatchedIds) > 0) {
+            throw new DomainValidationException(
+                'Cannot enroll student in courses outside their registered program.',
+                ['course_offering_public_ids' => ['Out-of-program IDs: ' . implode(', ', $mismatchedIds)]]
+            );
+        }
+
+        return DB::transaction(function () use ($student, $curricula) {
             $enrolledPublicIds = [];
 
             foreach ($curricula as $curriculum) {
-                Enrollment::query()->firstOrCreate([
-                    'student_id' => $student->id,
-                    'curriculum_id' => $curriculum->id,
-                ], [
-                    'public_id' => (string) Str::uuid(),
-                    'status' => 'enrolled',
-                ]);
+                Enrollment::query()->firstOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'curriculum_id' => $curriculum->id,
+                    ],
+                    [
+                        'public_id' => (string) Str::uuid(),
+                        'status' => 'In Progress',
+                    ]
+                );
 
                 $enrolledPublicIds[] = $curriculum->public_id;
             }
@@ -452,17 +459,10 @@ class StudentApiService implements StudentsApiInterface
     public function studentsPublicIdRegisterPost(
         string $public_id
     ): StandardResponse|ErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()
-            ->where('public_id', $public_id)
-            ->with('program.school')
-            ->first();
+        $student = $this->findStudentOrFail($public_id, ['program.school']);
 
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
-            );
+        if ($student->status !== 'Admitted') {
+            throw new InvalidStudentStateException('register', (string) $student->status, 'Admitted');
         }
 
         return DB::transaction(function () use ($student) {
@@ -481,7 +481,7 @@ class StudentApiService implements StudentsApiInterface
             $studentNumber = sprintf('%s%03d', $schoolPrefix, $sequence);
 
             $student->update([
-                'status' => 'registered',
+                'status' => 'Registered',
                 'student_number' => $studentNumber,
             ]);
 
@@ -510,20 +510,14 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         StudentsPublicIdRejectPostRequest $StudentsPublicIdRejectPostRequest
     ): StandardResponse|ErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()
-            ->where('public_id', $public_id)
-            ->first();
+        $student = $this->findStudentOrFail($public_id);
 
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
-            );
+        if (!in_array($student->status, ['Pending', 'Draft'], true)) {
+            throw new InvalidStudentStateException('reject', (string) $student->status, 'Pending or Draft');
         }
 
         $student->update([
-            'status' => 'rejected',
+            'status' => 'Rejected',
             'rejection_date' => now(),
         ]);
 
@@ -545,39 +539,13 @@ class StudentApiService implements StudentsApiInterface
     }
 
     /**
-     * Helper to extract scalar value from backed enum or string.
-     */
-    private function resolveValue(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if ($value instanceof \BackedEnum) {
-            return (string) $value->value;
-        }
-
-        return (string) $value;
-    }
-
-    /**
      * Batch Reconcile Student Financial Balances
      */
     public function programsPublicIdFinancialReconciliationPost(
         string $public_id,
         ProgramFinancialReconciliationRequest $ProgramFinancialReconciliationRequest
     ): ReconciliationBatchResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Program|null $program */
-        $program = Program::query()
-            ->where('public_id', $public_id)
-            ->first();
-
-        if (!$program) {
-            return new ErrorResponse(
-                message: 'Selected program not found.',
-                error: 'NOT_FOUND'
-            );
-        }
+        $program = $this->findProgramOrFail($public_id);
 
         $cohortKey = match (true) {
             method_exists($ProgramFinancialReconciliationRequest, 'getCohortKey') => $ProgramFinancialReconciliationRequest->getCohortKey(),
@@ -592,8 +560,11 @@ class StudentApiService implements StudentsApiInterface
             default => [],
         };
 
-        if (!is_array($balances)) {
-            $balances = [];
+        if (!is_array($balances) || count($balances) === 0) {
+            throw new DomainValidationException(
+                'At least one student balance record is required.',
+                ['balances' => ['The balances list cannot be empty.']]
+            );
         }
 
         $balancesData = array_map(function (mixed $item): array {
@@ -619,7 +590,6 @@ class StudentApiService implements StudentsApiInterface
             ];
         }, $balances);
 
-        // Queue worker job
         ProcessBatchFinancialReconciliation::dispatch(
             $program->id,
             (string) $cohortKey,
@@ -645,17 +615,7 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         ProgramAcademicReconciliationRequest $ProgramAcademicReconciliationRequest
     ): ReconciliationBatchResponse|ErrorResponse|ValidationErrorResponse {
-        /** @var Program|null $program */
-        $program = Program::query()
-            ->where('public_id', $public_id)
-            ->first();
-
-        if (!$program) {
-            return new ErrorResponse(
-                message: 'Selected program not found.',
-                error: 'NOT_FOUND'
-            );
-        }
+        $program = $this->findProgramOrFail($public_id);
 
         $cohortKey = match (true) {
             method_exists($ProgramAcademicReconciliationRequest, 'getCohortKey') => $ProgramAcademicReconciliationRequest->getCohortKey(),
@@ -671,8 +631,11 @@ class StudentApiService implements StudentsApiInterface
             default => [],
         };
 
-        if (!is_array($records)) {
-            $records = [];
+        if (!is_array($records) || count($records) === 0) {
+            throw new DomainValidationException(
+                'At least one academic record is required.',
+                ['academic_records' => ['The academic_records list cannot be empty.']]
+            );
         }
 
         $recordsData = array_map(function (mixed $item): array {
@@ -758,7 +721,6 @@ class StudentApiService implements StudentsApiInterface
             ];
         }, $records);
 
-        // Queue worker job
         ProcessBatchAcademicReconciliation::dispatch(
             $program->id,
             (string) $cohortKey,
@@ -784,17 +746,7 @@ class StudentApiService implements StudentsApiInterface
         string $public_id,
         ?string $collection = null
     ): StudentFilesResponse|ErrorResponse {
-        /** @var Student|null $student */
-        $student = Student::query()
-            ->where('public_id', $public_id)
-            ->first();
-
-        if (!$student) {
-            return new ErrorResponse(
-                message: 'Student record not found.',
-                error: 'NOT_FOUND'
-            );
-        }
+        $student = $this->findStudentOrFail($public_id);
 
         $query = $student->files();
 
@@ -822,5 +774,50 @@ class StudentApiService implements StudentsApiInterface
             message: 'Student files retrieved successfully.',
             data: $fileItems
         );
+    }
+
+    /**
+     * @param array<int, string> $relations
+     */
+    private function findStudentOrFail(string $publicId, array $relations = []): Student
+    {
+        /** @var Student|null $student */
+        $student = Student::query()
+            ->with($relations)
+            ->where('public_id', $publicId)
+            ->first();
+
+        if (!$student) {
+            throw new ResourceNotFoundException('Student', $publicId);
+        }
+
+        return $student;
+    }
+
+    private function findProgramOrFail(string $publicId): Program
+    {
+        /** @var Program|null $program */
+        $program = Program::query()
+            ->where('public_id', $publicId)
+            ->first();
+
+        if (!$program) {
+            throw new ResourceNotFoundException('Program', $publicId);
+        }
+
+        return $program;
+    }
+
+    private function resolveValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return (string) $value;
     }
 }
